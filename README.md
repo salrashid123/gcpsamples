@@ -171,16 +171,15 @@ Oauth2 service = new Oauth2.Builder(httpTransport, jsonFactory, credential)
 Userinfoplus ui = service.userinfo().get().execute(); 
 ```
 
-```json
+*build.gradle*
+```gradle
 apply plugin: 'war'
 apply plugin: 'gae'
 apply plugin: "java"
 sourceCompatibility = 1.7
-
 repositories {
     mavenCentral()
 }
-
 buildscript {
     repositories {
         mavenCentral()
@@ -189,14 +188,12 @@ buildscript {
         classpath 'org.gradle.api.plugins:gradle-gae-plugin:0.9'
     }
 }
-
 dependencies {
     gaeSdk  'com.google.appengine:appengine-java-sdk:1.9.24'
     compile 'com.google.appengine:appengine-api-1.0-sdk:1.9.24'
     compile 'javax.servlet:servlet-api:2.5'
     compile 'jstl:jstl:1.2'
 }
-
 gae {
     downloadSdk = true
 } 
@@ -229,8 +226,8 @@ Userinfoplus ui = service.userinfo().get().execute();
 System.out.println(ui.getEmail());
 ```
 
-
-```json
+*build.gradle*
+```gradle
 apply plugin: 'java'
 apply plugin: 'application'
 mainClassName = 'com.yourapp.MainApp'
@@ -238,7 +235,6 @@ mainClassName = 'com.yourapp.MainApp'
 repositories {
     mavenCentral()
 }
-
 dependencies {
     compile 'com.google.api-client:google-api-client:1.20.0'
     compile 'com.google.apis:google-api-services-oauth2:v2-rev93-1.20.0'
