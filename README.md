@@ -28,14 +28,18 @@ The following examples use the Oauth2 *service* to demonstrate the initialized c
 * [oauth2 protocol](https://developers.google.com/identity/protocols/OAuth2)
 * [oauth2 service](https://developers.google.com/apis-explorer/#p/oauth2/v2/)
 
-
 ###Python
 [Google API Client Library for Python](https://developers.google.com/api-client-library/python/)  
 
+```
+apt-get install curl python2.7 python-pip
+pip install requests google-api-python-client httplib2 oauth2client
+```
+
 ####Appengine
 ```python
-from oauth2client.appengine import AppAssertionCredentials
-from google.appengine.api import app_identity
+#from oauth2client.appengine import AppAssertionCredentials
+from oauth2client.client import GoogleCredentials
 from apiclient.discovery import build
 
 scope='https://www.googleapis.com/auth/userinfo.email'
@@ -54,7 +58,7 @@ import pprint
 import httplib2
 from apiclient.discovery import build
 from oauth2client.client import GoogleCredentials
-from oauth2client.gce import AppAssertionCredentials
+#from oauth2client.gce import AppAssertionCredentials
 
 scope='https://www.googleapis.com/auth/userinfo.email'
 #credentials = AppAssertionCredentials(scope=scope)
@@ -141,13 +145,13 @@ resp = resource.get(parameter='value').execute()
 ####Appengine
 
 ```java
-import com.google.appengine.api.appidentity.AppIdentityService;
-import com.google.appengine.api.appidentity.AppIdentityServiceFactory;
+//import com.google.appengine.api.appidentity.AppIdentityService;
+//import com.google.appengine.api.appidentity.AppIdentityServiceFactory;
 import com.google.api.client.extensions.appengine.http.UrlFetchTransport;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.oauth2.*;
-import com.google.api.services.oauth2.model.Userinfo;
+import com.google.api.services.oauth2.model.Userinfoplus
 /*
 AppIdentityService appIdentity = AppIdentityServiceFactory.getAppIdentityService();    
 AppIdentityService.GetAccessTokenResult accessToken = appIdentity.getAccessToken(Arrays.asList(StorageScopes.DEVSTORAGE_FULL_CONTROL));         
@@ -164,10 +168,43 @@ if (credential.createScopedRequired())
 Oauth2 service = new Oauth2.Builder(httpTransport, jsonFactory, credential)
     .setApplicationName("oauth client").build();
     
-Userinfo ui = service.userinfo().get().execute(); 
+Userinfoplus ui = service.userinfo().get().execute(); 
 ```
 
+```json
+apply plugin: 'war'
+apply plugin: 'gae'
+apply plugin: "java"
+sourceCompatibility = 1.7
+
+repositories {
+    mavenCentral()
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.gradle.api.plugins:gradle-gae-plugin:0.9'
+    }
+}
+
+dependencies {
+    gaeSdk  'com.google.appengine:appengine-java-sdk:1.9.24'
+    compile 'com.google.appengine:appengine-api-1.0-sdk:1.9.24'
+    compile 'javax.servlet:servlet-api:2.5'
+    compile 'jstl:jstl:1.2'
+}
+
+gae {
+    downloadSdk = true
+} 
+```
+
+
 ####ComputeEngine
+
 ```java
 import java.util.Arrays;
 import com.google.api.client.googleapis.compute.ComputeCredential;
@@ -176,28 +213,38 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.oauth2.Oauth2;
-import com.google.api.services.oauth2.Oauth2Request;
-import com.google.api.services.oauth2.Oauth2RequestInitializer;
 import com.google.api.services.oauth2.Oauth2Scopes;
-import com.google.api.services.oauth2.model.Userinfo;
+import com.google.api.services.oauth2.model.Userinfoplus;
 
 HttpTransport httpTransport = new NetHttpTransport();             
 JacksonFactory jsonFactory = new JacksonFactory();
-
-//ComputeCredential credential = new ComputeCredential.Builder(httpTransport, jsonFactory).build();
-
-GoogleCredential credential = GoogleCredential.getApplicationDefault(httpTransport,jsonFactory);
-            
+//ComputeCredential credential = new ComputeCredential.Builder(httpTransport, jsonFactory).build(); 
+GoogleCredential credential = GoogleCredential.getApplicationDefault(httpTransport,jsonFactory);                            
 if (credential.createScopedRequired())
-    credential = credential.createScoped(Arrays.asList(Oauth2Scopes.USERINFO_EMAIL));           
-            
+    credential = credential.createScoped(Arrays.asList(Oauth2Scopes.USERINFO_EMAIL));                                       
 Oauth2 service = new Oauth2.Builder(httpTransport, jsonFactory, credential)
-            .setApplicationName("oauth client")   
-            .build();
-            
-Userinfo ui = service.userinfo().get().execute();
+                            .setApplicationName("oauth client")   
+                            .build();                           
+Userinfoplus ui = service.userinfo().get().execute();
 System.out.println(ui.getEmail());
 ```
+
+
+```json
+apply plugin: 'java'
+apply plugin: 'application'
+mainClassName = 'com.yourapp.MainApp'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.google.api-client:google-api-client:1.20.0'
+    compile 'com.google.apis:google-api-services-oauth2:v2-rev93-1.20.0'
+}
+```
+
 
 ####Service Account JSON File
 ```java
@@ -210,7 +257,7 @@ import com.google.api.services.oauth2.Oauth2;
 import com.google.api.services.oauth2.Oauth2Request;
 import com.google.api.services.oauth2.Oauth2RequestInitializer;
 import com.google.api.services.oauth2.Oauth2Scopes;
-import com.google.api.services.oauth2.model.Userinfo;
+import com.google.api.services.oauth2.model.Userinfoplus;
 
 String SERVICE_ACCOUNT_JSON_FILE = "YOUR_SERVICE_ACCOUNT_JSON_FILE.json";
 
@@ -230,11 +277,11 @@ Oauth2 service = new Oauth2.Builder(httpTransport, jsonFactory, credential)
             .setApplicationName("oauth client")   
             .build();
             
-Userinfo ui = service.userinfo().get().execute();
+Userinfoplus ui = service.userinfo().get().execute();
 System.out.println(ui.getEmail());
 ```
 
-####UserFlow (installed)
+####UserFlow
 ```java
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
