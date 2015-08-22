@@ -25,6 +25,40 @@ You can always specify the target source to acquire credentials by using intent 
 
 The following examples use the Oauth2 *service* to demonstrate the initialized client.  
 
+* [Python](#python)
+    - [appengine](#appengine)
+    - [compute](#computeengine)
+    - [Service Account](#service-account-pkcs12-file)
+    - [Userflow](#userflow)
+    - [misc](#misc)
+        + [API Key](#setting-api-key)
+        + [Logging](#logging)
+        + [Cloud Endpoints](#appengine-cloud-endpoints)
+
+* [Java](#java)
+    - [appengine](#appengine-1)
+    - [compute](#computengine-1)
+    - [Service Account](#service-account-json-file)
+    - [Userflow](#userflow-1)
+    - [misc](#misc-1)
+        + [Logging](#trace-logging)
+        + [API Key](#setting-api-key-1)
+        + [Request Parameter](#setting-request-parameter)
+ 
+* [Go](#go)
+    - [appengine](#appengine-2)
+    - [compute](#computengine-2)
+    - [Service Account](#service-account-json-file-1)
+    - [Userflow](#userflow-2)
+    - [misc](#misc-2)
+        + [API Key](#setting-api-key-2)
+
+* [C&#35;](#c)
+    - [compute](#computengine-3)
+    - [Service Account](#service-account-json-file-3)
+    - [Userflow](#userflow-4)
+
+
 * [oauth2 protocol](https://developers.google.com/identity/protocols/OAuth2)
 * [oauth2 service](https://developers.google.com/apis-explorer/#p/oauth2/v2/)
 
@@ -86,7 +120,7 @@ credentials = SignedJwtAssertionCredentials(
         scope='https://www.googleapis.com/auth/userinfo.email')
 ```
 
-####Userflow (installed)
+####Userflow
 [flow_from_clientsecrets](https://developers.google.com/api-client-library/python/guide/aaa_oauth#flow_from_clientsecrets)
 ```python
 import httplib2
@@ -108,12 +142,14 @@ resp = service.userinfo().get().execute()
 print resp['email']
 ```
 
-#####Setting API Key
+####Misc
+
+#####Setting API Key 
 ```python
 service = build(serviceName='oauth2', version= 'v2',http=http, developerKey='YOUR_API_KEY')
 ```
 
-#####Logging
+#####Logging 
 ```python
 import logging
 import httplib2
@@ -312,7 +348,8 @@ Oauth2 service = new Oauth2.Builder(httpTransport, jsonFactory, credential)
 Userinfo ui = service.userinfo().get().execute();
 ```
 
-#####Trace logging
+####Misc
+##### Logging
 ```java
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
@@ -336,7 +373,7 @@ lc.setLevel(Level.ALL);
 lc.addHandler(consoleHandler);  
 ```
 
-#####Setting API Key
+#####Setting API Key 
 ```java
 String API_KEY = "...";
 Oauth2 service = new Oauth2.Builder(httpTransport, jsonFactory, credential)
@@ -480,7 +517,7 @@ func main() {
 ```
 
 
-####UserFlow (installed)
+####UserFlow
 ```go
 package main
 import (
@@ -527,7 +564,9 @@ func main() {
 }
 ```
 
-#####APIKey
+####Misc
+
+#####Setting API Key
 ```go
 import "google.golang.org/api/googleapi/transport"
 apiKey :="YOUR_API_KEY"
