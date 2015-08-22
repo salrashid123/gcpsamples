@@ -39,7 +39,10 @@ from google.appengine.api import app_identity
 from apiclient.discovery import build
 
 scope='https://www.googleapis.com/auth/userinfo.email'
-credentials = AppAssertionCredentials(scope=scope)
+#credentials = AppAssertionCredentials(scope=scope)
+credentials = GoogleCredentials.get_application_default()
+if credentials.create_scoped_required():
+  credentials = credentials.create_scoped(scope)
 http = credentials.authorize(httplib2.Http())
 resp = service.userinfo().get().execute()
 logging.info(resp['email'])
