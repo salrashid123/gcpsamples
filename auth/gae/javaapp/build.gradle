@@ -1,0 +1,41 @@
+// set appEmail variable
+// gradle war
+// gradle gaeUpdate
+
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: 'gae'
+
+def appEmail = "YOUR_EMAIL_FOR_DEPLOYMENT"
+
+sourceCompatibility = 1.7
+repositories {
+    mavenCentral()
+}
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.gradle.api.plugins:gradle-gae-plugin:0.9'
+        classpath 'com.google.appengine:gradle-appengine-plugin:1.9.24'
+    }
+}
+dependencies {
+    gaeSdk  'com.google.appengine:appengine-java-sdk:1.9.24'
+    compile 'com.google.appengine:appengine-api-1.0-sdk:1.9.24'
+    compile 'com.google.api-client:google-api-client-appengine:1.20.0'
+    compile 'com.google.api-client:google-api-client:1.20.0'
+    compile 'com.google.apis:google-api-services-oauth2:v2-rev93-1.20.0'    
+    compile 'javax.servlet:servlet-api:2.5'
+    compile 'jstl:jstl:1.2'
+}
+gae {
+    downloadSdk = true
+  appcfg {
+    email = "${appEmail}"
+    noCookies = true
+    oauth2 = true
+  }    
+} 
+

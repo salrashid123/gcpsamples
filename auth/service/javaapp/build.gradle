@@ -1,0 +1,14 @@
+// gradle application
+
+apply plugin: 'java'
+apply plugin: 'application'
+mainClassName = 'com.test.TestApp'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.google.api-client:google-api-client:1.20.0'
+    compile 'com.google.apis:google-api-services-oauth2:v2-rev93-1.20.0'
+}

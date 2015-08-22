@@ -25,39 +25,6 @@ You can always specify the target source to acquire credentials by using intent 
 
 The following examples use the Oauth2 *service* to demonstrate the initialized client.  
 
-* [Python](#python)
-    - [appengine](#appengine)
-    - [compute](#computeengine)
-    - [Service Account](#service-account-pkcs12-file)
-    - [Userflow](#userflow)
-    - [misc](#misc)
-        + [API Key](#setting-api-key)
-        + [Logging](#logging)
-        + [Cloud Endpoints](#appengine-cloud-endpoints)
-
-* [Java](#java)
-    - [appengine](#appengine-1)
-    - [compute](#computengine-1)
-    - [Service Account](#service-account-json-file)
-    - [Userflow](#userflow-1)
-    - [misc](#misc-1)
-        + [Logging](#trace-logging)
-        + [API Key](#setting-api-key-1)
-        + [Request Parameter](#setting-request-parameter)
- 
-* [Go](#go)
-    - [appengine](#appengine-2)
-    - [compute](#computengine-2)
-    - [Service Account](#service-account-json-file-1)
-    - [Userflow](#userflow-2)
-    - [misc](#misc-2)
-        + [API Key](#setting-api-key-2)
-
-* [C&#35;](#c)
-    - [compute](#computengine-3)
-    - [Service Account](#service-account-json-file-3)
-    - [Userflow](#userflow-4)
-
 
 * [oauth2 protocol](https://developers.google.com/identity/protocols/OAuth2)
 * [oauth2 service](https://developers.google.com/apis-explorer/#p/oauth2/v2/)
@@ -71,76 +38,26 @@ pip install requests google-api-python-client httplib2 oauth2client
 ```
 
 ####Appengine
-```python
-#from oauth2client.appengine import AppAssertionCredentials
-from oauth2client.client import GoogleCredentials
-from apiclient.discovery import build
+Under [auth/gae/pyapp/](auth/gae/pyapp/).  Deploys an application to appengine that uses *Application Default Credentials*.  
 
-scope='https://www.googleapis.com/auth/userinfo.email'
-#credentials = AppAssertionCredentials(scope=scope)
-credentials = GoogleCredentials.get_application_default()
-if credentials.create_scoped_required():
-  credentials = credentials.create_scoped(scope)
-http = credentials.authorize(httplib2.Http())
-resp = service.userinfo().get().execute()
-logging.info(resp['email'])
-```
+*AppAssertionCredentials*  is also shown but commented.
+
+Remember to edit app.yaml file with your appID.
 
 ####ComputeEngine
-```python
-import pprint
-import httplib2
-from apiclient.discovery import build
-from oauth2client.client import GoogleCredentials
-#from oauth2client.gce import AppAssertionCredentials
+Under [auth/compute/pyapp](auth/compute/pyapp).  Runs a simple application on compute engine using *Application Default Credentials*.
 
-scope='https://www.googleapis.com/auth/userinfo.email'
-#credentials = AppAssertionCredentials(scope=scope)
-credentials = GoogleCredentials.get_application_default()
-if credentials.create_scoped_required():
-  credentials = credentials.create_scoped(scope)
-http = httplib2.Http()
-credentials.authorize(http)
-service = build(serviceName='oauth2', version= 'v2',http=http)
-resp = service.userinfo().get().execute()
-print resp['email']
-```
+*AppAssertionCredentials* is also shown but commented
 
-####Service Account PKCS12 File
+####Service Account File
+Under [auth/service/pyapp](auth/service/pyapp/).  Runs a simple application that uses the service account credential from both a PKCS12 file and a JSON keyfile.  Application Default Credentials uses the JSON keyfile only if the *GOOGLE_APPLICATION_CREDENTIALS* variable isset
+
 [Service Accounts](https://developers.google.com/api-client-library/python/auth/service-accounts)
-```python
-from oauth2client.client import SignedJwtAssertionCredentials
-
-f = file('YOUR_CERTIFICATE_FILE.p12', 'r').read()
-key = f.read()
-f.close()
-credentials = SignedJwtAssertionCredentials(
-        service_account_name = 'YOUR_SERIVCE_ACCOUNT@developer.gserviceaccount.com',
-        private_key = key, private_key_password='notasecret',
-        scope='https://www.googleapis.com/auth/userinfo.email')
-```
 
 ####Userflow
-[flow_from_clientsecrets](https://developers.google.com/api-client-library/python/guide/aaa_oauth#flow_from_clientsecrets)
-```python
-import httplib2
-from apiclient import discovery
-import oauth2client
-from apiclient.discovery import build
-from oauth2client.client import flow_from_clientsecrets
+Under [auth/userflow/pyapp](auth/userflow/pyapp).  Runs a simple application that performs user-interactive webflow and propmpts the user for consent.  Download an *installed* app client_secrets.json and reference it for the 'flow_from_clientsecrets()' method.
 
-flow  = flow_from_clientsecrets('client_secrets.json',
-                               scope='https://www.googleapis.com/auth/userinfo.email',
-                               redirect_uri='urn:ietf:wg:oauth:2.0:oob')
-auth_uri = flow.step1_get_authorize_url()
-print 'goto the following url ' +  auth_uri
-code = raw_input('Enter your input:')
-credentials = flow.step2_exchange(code)
-http = credentials.authorize(httplib2.Http())
-service = build(serviceName='oauth2', version= 'v2',http=http)
-resp = service.userinfo().get().execute()
-print resp['email']
-```
+[flow_from_clientsecrets](https://developers.google.com/api-client-library/python/guide/aaa_oauth#flow_from_clientsecrets)
 
 ####Misc
 
@@ -175,178 +92,18 @@ resource = service.yourAPI()
 resp = resource.get(parameter='value').execute()
 ```
 
+#####Credential store
+
 ###Java
 [Java API Client Library](https://developers.google.com/api-client-library/java/)
 
 ####Appengine
 
-```java
-//import com.google.appengine.api.appidentity.AppIdentityService;
-//import com.google.appengine.api.appidentity.AppIdentityServiceFactory;
-import com.google.api.client.extensions.appengine.http.UrlFetchTransport;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.services.oauth2.*;
-import com.google.api.services.oauth2.model.Userinfoplus
-/*
-AppIdentityService appIdentity = AppIdentityServiceFactory.getAppIdentityService();    
-AppIdentityService.GetAccessTokenResult accessToken = appIdentity.getAccessToken(Arrays.asList(StorageScopes.DEVSTORAGE_FULL_CONTROL));         
-GoogleCredential credential;
-    credential.setAccessToken(accessToken.getAccessToken());
-*/
-HttpTransport httpTransport = new UrlFetchTransport();        
-JacksonFactory jsonFactory = new JacksonFactory();
-    
-GoogleCredential credential = GoogleCredential.getApplicationDefault(httpTransport,jsonFactory);    
-if (credential.createScopedRequired())
-    credential = credential.createScoped(Arrays.asList(Oauth2Scopes.USERINFO_EMAIL));           
-    
-Oauth2 service = new Oauth2.Builder(httpTransport, jsonFactory, credential)
-    .setApplicationName("oauth client").build();
-    
-Userinfoplus ui = service.userinfo().get().execute(); 
-```
-
-*build.gradle*
-```gradle
-apply plugin: 'war'
-apply plugin: 'gae'
-apply plugin: "java"
-sourceCompatibility = 1.7
-repositories {
-    mavenCentral()
-}
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'org.gradle.api.plugins:gradle-gae-plugin:0.9'
-    }
-}
-dependencies {
-    gaeSdk  'com.google.appengine:appengine-java-sdk:1.9.24'
-    compile 'com.google.appengine:appengine-api-1.0-sdk:1.9.24'
-    compile 'javax.servlet:servlet-api:2.5'
-    compile 'jstl:jstl:1.2'
-}
-gae {
-    downloadSdk = true
-} 
-```
-
-
 ####ComputeEngine
 
-```java
-import java.util.Arrays;
-import com.google.api.client.googleapis.compute.ComputeCredential;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.services.oauth2.Oauth2;
-import com.google.api.services.oauth2.Oauth2Scopes;
-import com.google.api.services.oauth2.model.Userinfoplus;
-
-HttpTransport httpTransport = new NetHttpTransport();             
-JacksonFactory jsonFactory = new JacksonFactory();
-//ComputeCredential credential = new ComputeCredential.Builder(httpTransport, jsonFactory).build(); 
-GoogleCredential credential = GoogleCredential.getApplicationDefault(httpTransport,jsonFactory);                            
-if (credential.createScopedRequired())
-    credential = credential.createScoped(Arrays.asList(Oauth2Scopes.USERINFO_EMAIL));                                       
-Oauth2 service = new Oauth2.Builder(httpTransport, jsonFactory, credential)
-                            .setApplicationName("oauth client")   
-                            .build();                           
-Userinfoplus ui = service.userinfo().get().execute();
-System.out.println(ui.getEmail());
-```
-
-*build.gradle*
-```gradle
-apply plugin: 'java'
-apply plugin: 'application'
-mainClassName = 'com.yourapp.MainApp'
-
-repositories {
-    mavenCentral()
-}
-dependencies {
-    compile 'com.google.api-client:google-api-client:1.20.0'
-    compile 'com.google.apis:google-api-services-oauth2:v2-rev93-1.20.0'
-}
-```
-
-
-####Service Account JSON File
-```java
-import java.util.Arrays;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.services.oauth2.Oauth2;
-import com.google.api.services.oauth2.Oauth2Request;
-import com.google.api.services.oauth2.Oauth2RequestInitializer;
-import com.google.api.services.oauth2.Oauth2Scopes;
-import com.google.api.services.oauth2.model.Userinfoplus;
-
-String SERVICE_ACCOUNT_JSON_FILE = "YOUR_SERVICE_ACCOUNT_JSON_FILE.json";
-
-HttpTransport httpTransport = new NetHttpTransport();             
-JacksonFactory jsonFactory = new JacksonFactory();
-        
-//FileInputStream inputStream = new FileInputStream(new File(SERVICE_ACCOUNT_JSON_FILE));
-//GoogleCredential credential = GoogleCredential.fromStream(inputStream, httpTransport, jsonFactory);
-            
-// set environment variable outside java first GOOGLE_APPLICATION_CREDENTIALS=YOUR_SERVICE_ACCOUNT_JSON_FILE.json        
-GoogleCredential credential = GoogleCredential.getApplicationDefault(httpTransport,jsonFactory);
-            
-if (credential.createScopedRequired())
-    credential = credential.createScoped(Arrays.asList(Oauth2Scopes.USERINFO_EMAIL));           
-            
-Oauth2 service = new Oauth2.Builder(httpTransport, jsonFactory, credential)
-            .setApplicationName("oauth client")   
-            .build();
-            
-Userinfoplus ui = service.userinfo().get().execute();
-System.out.println(ui.getEmail());
-```
+####Service Account File
 
 ####UserFlow
-```java
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
-import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.services.oauth2.*;
-import com.google.api.services.oauth2.model.Userinfo;
-
-HttpTransport httpTransport = new NetHttpTransport();             
-JacksonFactory jsonFactory = new JacksonFactory();
-            
-GoogleClientSecrets clientSecrets =  new GoogleClientSecrets();
-GoogleClientSecrets.Details det = new GoogleClientSecrets.Details();
-det.setClientId("YOUR_CLIENT_ID");
-det.setClientSecret("YOUR_CLIENT_SECRET");    
-det.setRedirectUris(Arrays.asList("urn:ietf:wg:oauth:2.0:oob"));
-clientSecrets.setInstalled(det);
-            
-GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-    httpTransport, jsonFactory, clientSecrets,
-    Collections.singleton(Oauth2Scopes.USERINFO_EMAIL)).build();            
-Credential credential = new AuthorizationCodeInstalledApp(flow,
-    new LocalServerReceiver()).authorize("user");
-            
-Oauth2 service = new Oauth2.Builder(httpTransport, jsonFactory, credential)
-    .setApplicationName("oauth client").build();
-            
-Userinfo ui = service.userinfo().get().execute();
-```
 
 ####Misc
 ##### Logging
@@ -395,174 +152,19 @@ Oauth2 service = new Oauth2.Builder(httpTransport, jsonFactory, credential)
     .build();
 ```
 
+#####Credential store
 
 ###Go
 [DefaultTokenSource](https://godoc.org/golang.org/x/oauth2/google#DefaultTokenSource)  
 
 ####Appengine
-```go
-import (
-    "fmt"
-    "golang.org/x/oauth2"
-    "golang.org/x/oauth2/google"
-    oauthsvc "google.golang.org/api/oauth2/v2"
-    "google.golang.org/appengine"
-    "google.golang.org/appengine/log"
-    "google.golang.org/appengine/urlfetch"
-    "net/http"
-)
-const ()
-func init() {
-    http.HandleFunc("/appid", appidhandler)
-}
-func appidhandler(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "text/plain")
-    ctx := appengine.NewContext(r)
-    //src := google.AppEngineTokenSource(ctx, oauthsvc.UserinfoEmailScope)
-    src, err := google.DefaultTokenSource(ctx, oauthsvc.UserinfoEmailScope)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-    }
-    client := &http.Client{
-        Transport: &oauth2.Transport{
-            Source: src,
-            Base:   &urlfetch.Transport{Context: ctx},
-        },
-    }
-    client = oauth2.NewClient(ctx, src)
-    service, err := oauthsvc.New(client)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-    }
-    ui, err := service.Userinfo.Get().Do()
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-    }
-    log.Infof(ctx, "UserInfo: %v", ui.Email)
-    fmt.Fprintln(w, "UserInfo: ", ui.Email)
-}
-```
 
 ####ComputeEngine
-```go
-package main
-import (
-        "golang.org/x/net/context"
-        "golang.org/x/oauth2"
-        "golang.org/x/oauth2/google"
-        oauthsvc "google.golang.org/api/oauth2/v2"
-        "log"        
-)
-func main() {
-        //src := google.ComputeTokenSource("")    
-        src, err := google.DefaultTokenSource(oauth2.NoContext, oauthsvc.UserinfoEmailScope)
-        if err != nil {
-              log.Fatalf("Unable to acquire token source: %v", err)
-        }        
-        client := oauth2.NewClient(context.Background(), src)
-        service, err := oauthsvc.New(client)
-        if err != nil {
-                log.Fatalf("Unable to create api service: %v", err)
-        }
-        ui, err := service.Userinfo.Get().Do()
-        if err != nil {
-                log.Fatalf("Unable to get userinfo: ", err)
-        }
-        log.Printf("UserInfo: %v", ui.Email)
-}
-```
 
 ####Service Account JSON File
-```go
-import (
-        "golang.org/x/net/context"
-        "golang.org/x/oauth2"
-        "golang.org/x/oauth2/google"
-        oauthsvc "google.golang.org/api/oauth2/v2"
-        "log"
-//        "io/ioutil"
-        "os"
-)
-
-func main() {
-        serviceAccountJSONFile := "/home/srashid/f.json"
-        /*
-        dat, err := ioutil.ReadFile(serviceAccountJSONFile)
-        if err != nil {
-              log.Fatalf("Unable to read service account file %v", err)
-        }
-        conf, err := google.JWTConfigFromJSON(dat, oauthsvc.UserinfoEmailScope)
-        if err != nil {
-              log.Fatalf("Unable to acquire generate config: %v", err)
-        }
-        client := conf.Client(oauth2.NoContext)
-        */
-        os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", serviceAccountJSONFile)
-        src, err := google.DefaultTokenSource(oauth2.NoContext, oauthsvc.UserinfoEmailScope)
-        if err != nil {
-              log.Fatalf("Unable to acquire token source: %v", err)
-        }
-        client := oauth2.NewClient(context.Background(), src)
-
-        service, err := oauthsvc.New(client)
-        if err != nil {
-                log.Fatalf("Unable to create api service: %v", err)
-        }
-        ui, err := service.Userinfo.Get().Do()
-        if err != nil {
-                log.Fatalf("Unable to get userinfo: ", err)
-        }
-        log.Printf("UserInfo: %v", ui.Email)
-}
-```
 
 
 ####UserFlow
-```go
-package main
-import (
-    "fmt"
-    "golang.org/x/net/context"
-    "golang.org/x/oauth2"
-    "golang.org/x/oauth2/google"    
-    "log"   
-    oauthsvc "google.golang.org/api/oauth2/v2"
-)
-func main() {
-    conf := &oauth2.Config{
-        ClientID:     "YOUR_CLIENT_ID",
-        ClientSecret: "YOUR_CLIENT_SECRET",
-        RedirectURL:  "urn:ietf:wg:oauth:2.0:oob",
-        Scopes: []string{
-            oauthsvc.UserinfoEmailScope,
-        },
-        Endpoint: google.Endpoint,
-    }
-    url := conf.AuthCodeURL("state")
-    log.Println("Visit the URL for the auth dialog: ", url)    
-    var code string
-    log.Print("Enter auth token: ")
-    if _, err := fmt.Scan(&code); err != nil {
-        log.Fatalf(err.Error())
-    }
-    tok, err := conf.Exchange(context.Background(), code)
-    if err != nil {
-        log.Fatalf(err.Error())
-    }
-    //client := conf.Client(context.Background(),tok)
-    src := conf.TokenSource(context.Background(),tok)       
-    client := oauth2.NewClient(context.Background(), src)   
-    service, err := oauthsvc.New(client)
-    if err != nil {
-        log.Fatalf("Unable to create oauth2 client: %v", err)
-    }
-    ui, err := service.Userinfo.Get().Do()
-    if err != nil {
-        log.Fatalf("ERROR: ", err)
-    }   
-    log.Printf("UserInfo: %v", ui.Email)
-}
-```
 
 ####Misc
 
@@ -575,56 +177,15 @@ client.Transport = &transport.APIKey{
 }
 ```
 
+#####Credential store
+
 ###C&#35;
 * [NuGet](https://www.nuget.org/packages/Google.Apis/)
 
 ####ComputeEngine
-```c#
-using Google.Apis;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Oauth2.v2;
-using Google.Apis.Oauth2.v2.Data;
-using Google.Apis.Services;
-
-//ComputeCredential credentials = new ComputeCredential(new ComputeCredential.Initializer());
-GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
-if (credential.IsCreateScopedRequired)
-    credential = credential.CreateScoped(new string[] { Oauth2Service.Scope.UserinfoEmail });
-var service = new Oauth2Service(new BaseClientService.Initializer()
-{
-    HttpClientInitializer = credential,
-    ApplicationName = "Oauth2 Sample",
-});
-Console.WriteLine(service.Userinfo.Get().Execute().Name);
-```
 
 ####Service Account JSON File
-```c#
-using Google.Apis;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Oauth2.v2;
-using Google.Apis.Oauth2.v2.Data;
-using Google.Apis.Services;
-
-string CREDENTIAL_FILE = "C:\\YOUR_SERVICE_ACCOUNT.json";
-Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", CREDENTIAL_FILE);
-GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
-if (credential.IsCreateScopedRequired)
-    credential = credential.CreateScoped(new string[] { Oauth2Service.Scope.UserinfoEmail });
-```
 
 ####UserFlow
-```c#
-using Google.Apis;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Oauth2.v2;
-using Google.Apis.Oauth2.v2.Data;
-using Google.Apis.Services;
 
-UserCredential credential;
-string clientId = "YOUR_CLIENT_ID.apps.googleusercontent.com";
-string clientSecret = "YOUR_CLIENT_SECRET";
-credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(new ClientSecrets{ClientId= clientId,ClientSecret=clientSecret},
-    new[] { Oauth2Service.Scope.UserinfoEmail }, Environment.UserName, CancellationToken.None);
-//Console.WriteLine("Credential file saved at: " + Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
-```
+#####Credential store
