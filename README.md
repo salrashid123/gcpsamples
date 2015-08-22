@@ -25,6 +25,27 @@ You can always specify the target source to acquire credentials by using intent 
 
 The following examples use the Oauth2 *service* to demonstrate the initialized client.  
 
+* [Python](#python)
+    - Appengine
+    - ComputeEngine
+    - Service Account File
+    - Userflow
+* [Java](#java)
+    - Appengine
+    - ComputeEngine
+    - Service Account File
+    - Userflow
+* [Go](#go)
+    - Appengine
+    - ComputeEngine
+    - Service Account File
+    - Userflow
+* [C#](#c)
+    - ComputeEngine
+    - Service Account File
+    - Userflow
+
+
 For more inforamtion, see:
 * [oauth2 protocol](https://developers.google.com/identity/protocols/OAuth2)
 * [oauth2 service](https://developers.google.com/apis-explorer/#p/oauth2/v2/)
