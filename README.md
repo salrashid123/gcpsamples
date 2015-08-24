@@ -1,6 +1,6 @@
 ## Google Cloud Platform Samples
 
-#### all samples here are provided as-is without warranty
+####  samples provided as-is without warranty
 
 Sample code demonstrating various Google Cloud Platform APIs.
 
@@ -8,11 +8,11 @@ Please refer to official documentation for usage and additional samples/usage.
 
 Code samples contained in this repo contain:
 
-  * BigQuery
+  * [BigQuery](bigquery/)
     * Basic query against public dataset in C# and Go.  
-  * CloudLogging
+  * [CloudLogging](cloudlogging/)
     * Listing and inserting custom log messages in C# and Go.  
-  * CloudMonitoring
+  * [CloudMonitoring](cloudmonitoring/)
     * Listing MetricsDescriptors and inserting custom metric in C# and Go.  
 
 ***  
@@ -119,6 +119,8 @@ resp = resource.get(parameter='value').execute()
 #####Credential store
 See [credential store](https://developers.google.com/api-client-library/python/guide/aaa_oauth#storage) documentation.
 
+***  
+
 ###Java
 
 [Java API Client Library](https://developers.google.com/api-client-library/java/).  Most of the samples below uses gradle to build and deploy.
@@ -207,6 +209,8 @@ Oauth2 service = new Oauth2.Builder(httpTransport, jsonFactory, credential)
 
 #####Credential store
 See documentatin on [Drive](https://developers.google.com/drive/web/credentials?hl=en)
+
+***  
 
 ###Go
 [DefaultTokenSource](https://godoc.org/golang.org/x/oauth2/google#DefaultTokenSource)  
@@ -316,6 +320,55 @@ func tokenFromFile(file string) (*oauth2.Token, error) {
 }
 ```
 
+#####Logging
+
+The follwoing example of trace http logging wraps the Transport around a logging version:
+[LogTransport](https://code.google.com/p/google-api-go-client/source/browse/examples/debug.go).  
+
+This example also shows how the *API_KEY* could get constructed although this particular API (oauth2/v2) does not need or expect an api_key.
+
+```go
+package main
+import (
+    "golang.org/x/oauth2"
+    "golang.org/x/oauth2/google"    
+    "log"   
+    oauthsvc "google.golang.org/api/oauth2/v2"
+    "google.golang.org/api/googleapi/transport" 
+    "net/http"
+)
+const (
+    api_key   = "YOUR_API_KEY"
+)
+func Auth() {
+    src, err := google.DefaultTokenSource(oauth2.NoContext, oauthsvc.UserinfoEmailScope)
+    if err != nil {
+        log.Fatalf("Unable to acquire token source: %v", err)
+    }
+    transport := &transport.APIKey{
+    //  Key:       api_key,
+        Transport: &logTransport{http.DefaultTransport},
+    }
+    client := &http.Client{
+        Transport: &oauth2.Transport{
+            Source: src,
+            Base:   transport,
+        },
+    }           
+    service, err := oauthsvc.New(client)
+    if err != nil {
+        log.Fatalf("Unable to create oauth2 service client: %v", err)
+    }
+    ui, err := service.Userinfo.Get().Do()
+    if err != nil {
+        log.Fatalf("ERROR: ", err)
+    }   
+    log.Printf("UserInfo: %v", ui.Email)
+}
+```
+
+
+***  
 
 ###C&#35;
 .NET packages downloadable from [NuGet](https://www.nuget.org/packages/Google.Apis/).  Full end-to-end example of all the auth modes available here for CloudStorage
@@ -323,7 +376,7 @@ func tokenFromFile(file string) (*oauth2.Token, error) {
 * [Google API .NET Library](https://developers.google.com/api-client-library/dotnet/get_started)
 
 ####ComputeEngine
-Under [auth/compute/dotnet] (auth/compute/dotnet).  Runs a simple application using both *Application DefaultCredentials* and *ComputeCredential*. 
+Under [auth/compute/dotnet](auth/compute/dotnet).  Runs a simple application using both *Application DefaultCredentials* and *ComputeCredential*. 
 
 ####Service Account JSON File
 Under [auth/service/dotnet](auth/service/dotnet).  Runs a simple application using both *Application DefaultCredentials* using a **JSON Certificate** and by directly reading in the **PKCS12 Certificate** file.  If the *GOOGLE_APPLICATION_CREDENTIALS* variable is set to point to the **JSON file**, the applicationDefault profile will also read the JSON file (otherwise, it will attempt to pick up the gcloud credentials).
@@ -332,9 +385,9 @@ Under [auth/service/dotnet](auth/service/dotnet).  Runs a simple application usi
 Under [auth/userflow/dotnet](auth/userflow/dotnet).   Runs a simple webflow application to acquire user consent for GoogleAPIs.  This particular userflow launches provides a link URL and expects user consent on the browser.
 
 #####Credential store
-Credentials are usually stored in
-gcloud
+Credentials from the GoogleAPIs userflow is usually stored at
+
 ```
 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
-or c:\Users\%USER%\AppData\Roaming\gcloud
+or c:\Users\%USER%\AppData\Roaming\Google.Apis.Auth
 ```
