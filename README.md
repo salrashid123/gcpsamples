@@ -63,7 +63,20 @@ Under [auth/gae/pyapp/](auth/gae/pyapp/)  Deploys an application to appengine th
 
 *AppAssertionCredentials*  is also shown but commented.
 
-Remember to edit app.yaml file with your appID.
+Remember to edit app.yaml file with your appID.  
+
+If running on the dev_appserver, you will need to set the local service account id and certificate first:
+```bash
+mkdir lib
+pip install --target=lib  requests google-api-python-client httplib2 oauth2client
+
+cat your_svc_account.p12 | openssl pkcs12 -nodes -nocerts -passin pass:notasecret | openssl rsa > key.pem
+
+gcloud preview app run app.yaml --appidentity-email-address=YOUR_SERVICE_ACCOUNT_ID@developer.gserviceaccount.com --appidentity-private-key-path=key.pem
+
+```
+
+For info on ```--appidentity-email-address``` and ```--appidentity-private-key-path```, see documentation on [gcloud dev_appserver](https://cloud.google.com/sdk/gcloud/reference/preview/app/run).
 
 ####ComputeEngine
 Under [auth/compute/pyapp](auth/compute/pyapp)  Runs a simple application on compute engine using *Application Default Credentials*.
