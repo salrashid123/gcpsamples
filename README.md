@@ -2,18 +2,9 @@
 
 ####  samples provided as-is without warranty
 
-Sample code demonstrating various Google Cloud Platform APIs.
+Sample code demonstrating various Auth mechanism for Google Cloud Platform APIs.
 
 Please refer to official documentation for usage and additional samples/usage.
-
-Code samples contained in this repo contain:
-
-  * [BigQuery](bigquery/)
-    * Basic query against public dataset in C# and Go.  
-  * [CloudLogging](cloudlogging/)
-    * Listing and inserting custom log messages in C# and Go.  
-  * [CloudMonitoring](cloudmonitoring/)
-    * Listing MetricsDescriptors and inserting custom metric in C# and Go.  
 
 ***  
 
