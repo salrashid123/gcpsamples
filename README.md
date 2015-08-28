@@ -223,13 +223,21 @@ See documentatin on [Drive](https://developers.google.com/drive/web/credentials?
 Under [auth/gae/goapp](auth/gae/goapp).  Runs a simple GAE application using both *Application DefaultCredentials* and *AppEngineTokenSource*.  To deploy:
 
 ```bash
-mkdir extra
-export GOPATH=/path/to/where/the/extra/folder/is
-go get golang.org/x/oauth2
-go get google.golang.org/appengine/...
-go get google.golang.org/cloud/compute/...
-go get google.golang.org/api/oauth2/v2
-google-cloud-sdk/go_appengine/goapp deploy src/app.yaml
+// mkdir extra
+// export GOPATH=/path/to/where/the/extra/folder/is
+// go get golang.org/x/oauth2
+// go get google.golang.org/appengine/...
+// go get google.golang.org/cloud/compute/...
+// go get google.golang.org/api/oauth2/v2
+
+// for vm: false
+// google-cloud-sdk/go_appengine/goapp serve src/app.yaml
+// google-cloud-sdk/go_appengine/goapp deploy src/app.yaml
+
+// for vm: true
+// uncomment appengine.Main() in func main()
+// gcloud preview app run src/app.yaml
+// gcloud preview app deploy src/app.yaml --version 1 --set-default
 ```
 
 ####ComputeEngine

@@ -6,7 +6,15 @@ package main
 // go get google.golang.org/appengine/...
 // go get google.golang.org/cloud/compute/...
 // go get google.golang.org/api/oauth2/v2
+
+// for vm: false
+// google-cloud-sdk/go_appengine/goapp serve src/app.yaml
 // google-cloud-sdk/go_appengine/goapp deploy src/app.yaml
+
+// for vm: true
+// uncomment appengine.Main() in func main()
+// gcloud preview app run src/app.yaml
+// gcloud preview app deploy src/app.yaml --version 1 --set-default
 
 import (
 	//"appengine"
@@ -22,10 +30,14 @@ import (
 
 const ()
 
+func main() {
+	// for vm: true
+	// appengine.Main()
+}
+
 func init() {
 	http.HandleFunc("/", mainhandler)
 	http.HandleFunc("/_ah/health", healthhandler)
-	//appengine.Main()
 }
 
 func healthhandler(w http.ResponseWriter, r *http.Request) {
