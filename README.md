@@ -214,6 +214,36 @@ Oauth2 service = new Oauth2.Builder(httpTransport, jsonFactory, credential)
 #####Credential store
 See documentatin on [Drive](https://developers.google.com/drive/web/credentials?hl=en)
 
+
+#####Exponential Backoff
+
+See [ExponentialBackOff](https://developers.google.com/api-client-library/java/google-http-java-client/backoff)
+
+
+```java
+import com.google.api.client.util.ExponentialBackOff;
+
+final GoogleCredential credential = GoogleCredential.getApplicationDefault(httpTransport,jsonFactory).createScoped(Arrays.asList(Oauth2Scopes.USERINFO_EMAIL));
+
+Oauth2 service = new Oauth2.Builder(httpTransport, jsonFactory, new HttpRequestInitializer() {
+                public void initialize(HttpRequest request) throws IOException {
+                    request.setContentLoggingLimit(0);
+                    request.setCurlLoggingEnabled(false);
+                    credential.initialize(request);
+                    ExponentialBackOff backoff = new ExponentialBackOff.Builder()
+                    .setInitialIntervalMillis(500)
+                    .setMaxElapsedTimeMillis(900000)
+                    .setMaxIntervalMillis(6000)
+                    .setMultiplier(1.5)
+                    .setRandomizationFactor(0.5)
+                    .build();
+                  request.setUnsuccessfulResponseHandler(new HttpBackOffUnsuccessfulResponseHandler(backoff));
+                }
+            })                  
+            .setApplicationName("oauth client")
+            .build();
+```
+
 ***  
 
 ###Go
@@ -222,22 +252,23 @@ See documentatin on [Drive](https://developers.google.com/drive/web/credentials?
 ####Appengine
 Under [auth/gae/goapp](auth/gae/goapp).  Runs a simple GAE application using both *Application DefaultCredentials* and *AppEngineTokenSource*.  To deploy:
 
+
 ```bash
-// mkdir extra
-// export GOPATH=/path/to/where/the/extra/folder/is
-// go get golang.org/x/oauth2
-// go get google.golang.org/appengine/...
-// go get google.golang.org/cloud/compute/...
-// go get google.golang.org/api/oauth2/v2
+mkdir extra
+export GOPATH=/path/to/where/the/extra/folder/is
+go get golang.org/x/oauth2
+go get google.golang.org/appengine/...
+go get google.golang.org/cloud/compute/...
+go get google.golang.org/api/oauth2/v2
 
-// for vm: false
-// google-cloud-sdk/go_appengine/goapp serve src/app.yaml
-// google-cloud-sdk/go_appengine/goapp deploy src/app.yaml
+# vm: false
+google-cloud-sdk/go_appengine/goapp serve src/app.yaml
+google-cloud-sdk/go_appengine/goapp deploy src/app.yaml
 
-// for vm: true
-// uncomment appengine.Main() in func main()
-// gcloud preview app run src/app.yaml
-// gcloud preview app deploy src/app.yaml --version 1 --set-default
+# vm: true
+uncomment appengine.Main in func main
+gcloud preview app run src/app.yaml
+gcloud preview app deploy src/app.yaml --version 1 --set-default
 ```
 
 ####ComputeEngine
@@ -283,6 +314,26 @@ client.Transport = &transport.APIKey{
     Key: apiKey, 
 }
 ```
+
+#####Validating id_token
+
+[Validating id_token](https://developers.google.com/identity/protocols/OpenIDConnect?hl=en#validatinganidtoken)
+
+```go
+src, err := google.DefaultTokenSource(oauth2.NoContext, oauthsvc.UserinfoEmailScope)
+if err != nil {
+    log.Fatalf("Unable to acquire token source: %v", err)
+}
+tok, err := src.Token()
+if err != nil {
+    log.Fatalf("Unable to acquire token: %v", err)
+}
+log.Printf("id_token: " , tok.Extra("id_token").(string))
+```
+
+Also see  
+* [Golang Token verificaiton](http://stackoverflow.com/questions/26159658/golang-token-validation-error/26287613#26287613)
+* [JWT debugger](http://jwt.io/)
 
 #####Credential store
 See [oauth2.ReuseTokenSource](https://www.godoc.org/golang.org/x/oauth2#ReuseTokenSource)
