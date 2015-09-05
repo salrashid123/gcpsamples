@@ -3,7 +3,7 @@
 import httplib2
 from apiclient.discovery import build
 from oauth2client.client import SignedJwtAssertionCredentials
-from oauth2client.client import GoogleCredential
+from oauth2client.client import GoogleCredentials
 
 scope='https://www.googleapis.com/auth/userinfo.email'
 
@@ -18,11 +18,10 @@ scope='https://www.googleapis.com/auth/userinfo.email'
 #        scope=scope)
 
 # for JSON_CERTIFICATE_FILES
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "YOUR_JSON_KEY_FILE"
+#os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "YOUR_JSON_KEY_FILE"
 credentials = GoogleCredentials.get_application_default()
 if credentials.create_scoped_required():
   credentials = credentials.create_scoped(scope)
-
 
 http = httplib2.Http()
 credentials.authorize(http)
