@@ -138,6 +138,9 @@ gradle war
 gradle gaeUpdate
 ```
 
+```bash
+mvn gcloud:deploy
+```
 ####ComputeEngine
 Under [auth/compute/javaapp](auth/compute/javaapp).  Runs a simple application using both *Application DefaultCredentials* and *ComputeCredential*. 
 
@@ -146,6 +149,9 @@ gradle task
 gradle run
 ```
 
+```bash
+mvn exec:java
+```
 ####Service Account File
 Under [auth/service/javaapp](auth/service/javaapp).  Runs a simple application using both *Application DefaultCredentials* and by directly reading in the JSON certificate file.  If the *GOOGLE_APPLICATION_CREDENTIALS* variable is set to point to the JSON file, the applicationDefault profile will also read the JSON file (otherwise, it will attempt to pick up the gcloud credentials)
 
@@ -155,6 +161,9 @@ gradle task
 gradle run
 ```
 
+```bash
+mvn exec:java
+```
 ####UserFlow
 Under [auth/userflow/javaapp](auth/userflow/javaapp).  Runs a simple webflow application to acquire user consent for GoogleAPIs.  This particular userflow launches a browser and listener.
 
@@ -163,7 +172,9 @@ gradle task
 gradle run
 ```
 
-
+```bash
+mvn exec:java
+```
 ####Misc
 ##### Logging
 ```java
