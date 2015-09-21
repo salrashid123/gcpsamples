@@ -4,7 +4,7 @@
 
 #mkdir lib
 #pip install -t lib google-api-python-client httplib2 oauth2client
-#gcloud preview app deploy app.yaml --set-default-version
+#gcloud preview app deploy app.yaml --set-default
 
 import os
 import sys
