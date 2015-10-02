@@ -6,6 +6,8 @@ Sample code demonstrating various Auth mechanism for Google Cloud Platform APIs.
 
 Please refer to official documentation for usage and additional samples/usage.
 
+[Google Authentication Samples](https://cloud.google.com/docs/authentication)
+
 ***  
 
 ### Application Default Credentials
