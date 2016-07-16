@@ -136,12 +136,13 @@ Under [auth/gae/javaapp](auth/gae/javaapp).  Runs a simple application using bot
 
 ```bash
 gradle task
-gradle war
-gradle gaeUpdate
+gradle appengineRun
+gradle appengineDeploy
 ```
 
 ```bash
-mvn gcloud:deploy
+mvn appengine:run
+mvn appengine:deploy
 ```
 ####ComputeEngine
 Under [auth/compute/javaapp](auth/compute/javaapp).  Runs a simple application using both *Application DefaultCredentials* and *ComputeCredential*. 

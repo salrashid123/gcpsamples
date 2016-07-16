@@ -32,7 +32,7 @@ public class TestApp {
 
 			// to use application default credentials and a JSON file, set the environment variable first:
             // export GOOGLE_APPLICATION_CREDENTIALS=YOUR_SERVICE_ACCOUNT_JSON_FILE.json        
-            //GoogleCredential credential = GoogleCredential.getApplicationDefault(httpTransport,jsonFactory);
+            GoogleCredential credential = GoogleCredential.getApplicationDefault(httpTransport,jsonFactory);
 
             if (credential.createScopedRequired())
                 credential = credential.createScoped(Arrays.asList(Oauth2Scopes.USERINFO_EMAIL));

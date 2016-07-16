@@ -13,7 +13,7 @@ import httplib2
 from google.appengine.ext import webapp
 import logging
 
-#from oauth2client.appengine import AppAssertionCredentials
+#from oauth2client.contrib.appengine import AppAssertionCredentials
 from oauth2client.client import GoogleCredentials
 from apiclient.discovery import build
 

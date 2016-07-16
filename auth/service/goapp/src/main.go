@@ -12,7 +12,7 @@ import (
 
 func main() {
 
-	serviceAccountJSONFile := "YOUR_SERVICE_ACCOUNT_JSON_FILE"
+	//serviceAccountJSONFile := "YOUR_SERVICE_ACCOUNT_JSON_FILE"
 
 	//dat, err := ioutil.ReadFile(serviceAccountJSONFile)
 	//if err != nil {

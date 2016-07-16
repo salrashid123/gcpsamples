@@ -3,7 +3,7 @@
 import httplib2
 from apiclient.discovery import build
 from oauth2client.client import GoogleCredentials
-from oauth2client.gce import AppAssertionCredentials
+#from oauth2client.contrib.gce import AppAssertionCredentials
 
 scope='https://www.googleapis.com/auth/userinfo.email'
 

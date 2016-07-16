@@ -44,9 +44,10 @@ namespace Oauth2Harness
                    Scopes = new[] { Oauth2Service.Scope.UserinfoEmail }
                }.FromCertificate(certificate));
             */
-
+            
             string CREDENTIAL_FILE_JSON = "C:\\your_json_cert.json";
             Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", CREDENTIAL_FILE_JSON);
+            
             GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
             if (credential.IsCreateScopedRequired)
                 credential = credential.CreateScoped(new string[] { Oauth2Service.Scope.UserinfoEmail });
