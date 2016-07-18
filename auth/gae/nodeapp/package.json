@@ -1,0 +1,14 @@
+{
+  "name": "myapp",
+  "version": "0.0.0",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "log4js": "^0.6.27",    
+    "google-auth-library": "~0.9.4",
+    "googleapis": "2.1.1",
+    "express": "~4.13.1",
+    "gcloud": "v0.34.0"    
+  }
+}

@@ -33,7 +33,13 @@ The following examples use the Oauth2 *service* to demonstrate the initialized c
     - ComputeEngine
     - Service Account File
     - Userflow
+* [Node](#node)
+    - Appengine
+    - ComputeEngine
+    - Service Account File
+    - Userflow    
 * [C#](#c)
+    - Appengine
     - ComputeEngine
     - Service Account File
     - Userflow
@@ -42,6 +48,7 @@ The following examples use the Oauth2 *service* to demonstrate the initialized c
 For more inforamtion, see:
 * [oauth2 protocol](https://developers.google.com/identity/protocols/OAuth2)
 * [oauth2 service](https://developers.google.com/apis-explorer/#p/oauth2/v2/)
+* [Service Accounts](https://developers.google.com/identity/protocols/OAuth2ServiceAccount#overview)
 
 ###Python
 * [Google API Client Library for Python](https://developers.google.com/api-client-library/python/)
@@ -281,8 +288,8 @@ google-cloud-sdk/go_appengine/goapp deploy src/app.yaml
 
 # vm: true
 uncomment appengine.Main in func main
-gcloud preview app run src/app.yaml
-gcloud preview app deploy src/app.yaml --version 1 --set-default
+gcloud app run src/app.yaml
+gcloud app deploy src/app.yaml --version 1 --set-default
 ```
 
 ####ComputeEngine
@@ -308,7 +315,7 @@ go run src/main.go
 ```
 
 ####UserFlow
-Under [auth/userflow/goapp](auth/userflow/goapp).   Runs a simple webflow application to acquire user consent for GoogleAPIs.  This particular userflow launches provides a link URL and expects the authorization token to get entered (installed application).
+Under [auth/userflow/goapp](auth/userflow/goapp).   Runs a simple webflow application to acquire user consent for GoogleAPIs.  This particular userflow launches a link URL and expects the authorization token to get entered (installed application).
 
 ```bash
 go get golang.org/x/net/context
@@ -447,10 +454,59 @@ func Auth() {
 
 ***  
 
+###NodeJS
+[google.auth.getApplicationDefault](https://developers.google.com/identity/protocols/application-default-credentials#callingnode)  
+
+####Appengine
+Under [auth/gae/nodeapp](auth/gae/nodeapp).  Runs a simple GAE application using *Application DefaultCredentials*.  To deploy:
+```
+gcloud app deploy app.yaml
+```
+
+####ComputeEngine
+Runs sample on ComputeEngine.  Requires the userinfo scope enabled on the compute engine instance.
+```bash
+npm install
+npm start
+```
+
+####Service Account JSON File
+Under [auth/service/nodeapp](auth/service/nodeapp).  Runs a simple application using both *Application DefaultCredentials* and directly reading *JSON KEY file*. 
+
+####UserFlow
+Under [auth/userflow/nodeapp](auth/userflow/nodeapp).   Runs a simple webflow application to acquire user consent for GoogleAPIs.  This particular userflow provides a link URL and expects the authorization token to get entered (installed application).
+
+
+####Misc
+
+#####Setting API Key
+
+```node
+var service = google.oauth2({ 
+      version: 'v2', 
+      auth: authClient, 
+      params: { key: 'YOUR_API_KEY'}
+});
+```
+
+#####Logging
+
+```bash
+export NODE_DEBUG=request
+```
+
+***
+
 ###C&#35;
 .NET packages downloadable from [NuGet](https://www.nuget.org/packages/Google.Apis/).  Full end-to-end example of all the auth modes available here for CloudStorage
 
 * [Google API .NET Library](https://developers.google.com/api-client-library/dotnet/get_started)
+
+####Appengine
+GAE Standard does not support .NET as a runtime.  However, you can deploy your application to GAE Flex if you run .NET Core on Linux.  See the following sample that runs a .NET
+webapp in Flex:  [.NET on GCP](https://github.com/salrashid123/gcpdotnet).
+Note: Google APIs do not support .NET Core (coreCLR) yet.  At the time of writing, they only supports upto [.NET Framework 4.5.1](https://www.nuget.org/packages/Google.Apis/).  This
+means you cannot use Google APIs from within a Container.   There are some [ports](https://www.nuget.org/packages/GoogleApis.Core.vNext/) to coreCLR but they are not officially supported.
 
 ####ComputeEngine
 Under [auth/compute/dotnet](auth/compute/dotnet).  Runs a simple application using both *Application DefaultCredentials* and *ComputeCredential*. 

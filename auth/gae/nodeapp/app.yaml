@@ -1,0 +1,9 @@
+runtime: custom
+env: flex
+
+manual_scaling:
+  instances: 1
+
+network:
+  instance_tag: gaenode
+  name: default
