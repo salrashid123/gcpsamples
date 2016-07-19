@@ -158,7 +158,7 @@ print res
 ```
 #####Returns JSON with a JWT signed by Google:
 ```json
-{u'id_token': u'YOUR_ID_TOKEN_SIGNED_BY_GOOGLE'}
+{"id_token": "YOUR_ID_TOKEN_SIGNED_BY_GOOGLE"}
 
 ```
 Decoded JWT id_token:
