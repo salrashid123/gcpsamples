@@ -132,6 +132,52 @@ resp = resource.get(parameter='value').execute()
 #####Credential store
 See [credential store](https://developers.google.com/api-client-library/python/guide/aaa_oauth#storage) documentation.
 
+
+#####ID Token from Service Account JSON Signed by Google
+If you need an id_token issued by Google using your JSON certificate:
+```python
+from oauth2client.service_account import ServiceAccountCredentials
+credentials = ServiceAccountCredentials.from_json_keyfile_name('YOUR_SERVICE_AcCOUNT.json')
+now = int(time.time())
+payload = {
+        'iat': now,
+        'exp': now + credentials.MAX_TOKEN_LIFETIME_SECS,
+        'aud': 'https://www.googleapis.com/oauth2/v4/token',
+        'iss': 'svc1-001@YOUR_PROJECT.iam.gserviceaccount.com',
+        'scope': 'svc1-001@YOUR_PROJECT.iam.gserviceaccount.com'
+}
+signed_jwt = oauth2client.crypt.make_signed_jwt(credentials._signer, payload, key_id=credentials._private_key_id)
+params = urllib.urlencode({
+      'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      'assertion': signed_jwt })
+headers = {"Content-Type": "application/x-www-form-urlencoded"}
+conn = httplib.HTTPSConnection("www.googleapis.com")
+conn.request("POST", "/oauth2/v4/token", params, headers)
+res = json.loads(conn.getresponse().read())
+print res
+```
+#####Returns JSON with a JWT signed by Google:
+```json
+{u'id_token': u'YOUR_ID_TOKEN_SIGNED_BY_GOOGLE'}
+
+```
+Decoded JWT id_token:
+```json
+{
+  "iss": "https://accounts.google.com",
+  "aud": "svc1-001@YOUR_PROJECT.iam.gserviceaccount.com",
+  "sub": "111402810199779215722",
+  "email_verified": true,
+  "azp": "svc1-001@YOUR_PROJECT.iam.gserviceaccount.com",
+  "email": "svc1-001@YOUR_PROJECT.iam.gserviceaccount.com",
+  "iat": 1468897846,
+  "exp": 1468901446
+}
+```
+
+In the same flow, if you used *'scope': 'https://www.googleapis.com/auth/userinfo.email'*, the return fields would include an access_token scoped to userinfo.email for the service account.  
+You do not need to explicitly recall the access_token as that is normally used internally when a Credential is initialized for a given Google API.
+
 ***  
 
 ###Java
