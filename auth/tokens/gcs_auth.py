@@ -31,7 +31,7 @@ class gcs_auth(object):
     ## First initialize IAM for the 'Master Service Account '
 
     scope = 'https://www.googleapis.com/auth/iam https://www.googleapis.com/auth/cloud-platform'
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "ServiceAccountA.json"
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "GCPNETAppID-e65deccae47b.json"
     credentials = GoogleCredentials.get_application_default()
     if credentials.create_scoped_required():
       credentials = credentials.create_scoped(scope)
@@ -44,9 +44,9 @@ class gcs_auth(object):
     # ----------------------------------------------------  access_token -----------------------------------   
 
     # THen create a JWT for the 'Secondary svc account'
-
-    jwt_scope = 'https://www.googleapis.com/auth/userinfo.email'
     jwt_header = '{"alg":"RS256","typ":"JWT"}'
+    jwt_scope = 'https://www.googleapis.com/auth/userinfo.email'
+
     
     iss = client_id
     now = int(time.time())
@@ -94,7 +94,7 @@ class gcs_auth(object):
       sys.exit(1)
 
 
-   # ----------------------------------------------------  id_token -----------------------------------   
+   # ----------------------------------------------------  id_token google_signed -----------------------------------   
       
     now = int(time.time())
     exptime = now + 3600
@@ -138,31 +138,24 @@ class gcs_auth(object):
       self.log(e.read(),logging.ERROR)      
       sys.exit(1)
 
+
    # ----------------------------------------------------  id_token self_signed -----------------------------------   
       
     audience = 'SystemC'
     id_scope='scope1 scope2'
     now = int(time.time())
     exptime = now + 3600
-    id_token_claim =('{"iss":"%s",'
-            '"scope":"%s",'
-            '"aud":"%s",'
-            '"exp":%s,'
-            '"iat":%s}') %(client_id,id_scope,audience,exptime,now)    
+    id_token_claim =('{"iss":"%s","scope":"%s", "aud":"%s","exp":%s,"iat":%s}') %(client_id,id_scope,audience,exptime,now)   
 
     jwt = self._urlsafe_b64encode(jwt_header) + '.' + self._urlsafe_b64encode(unicode(id_token_claim, 'utf-8')) 
     slist = resource.serviceAccounts().signBlob(name='projects/mineral-minutia-820/serviceAccounts/'+client_id, 
                                                   body={'bytesToSign': base64.b64encode(jwt) })
 
-    resp = slist.execute()     
-    r = base64.urlsafe_b64encode(base64.decodestring(resp['signature']))
+    resp = slist.execute()
+    r = self._urlsafe_b64encode(base64.decodestring(resp['signature']))
     signed_jwt = jwt + '.' + r    
 
     self.log('Self-signed id_token:: ' + signed_jwt,  logging.INFO)
-    self.log('Verify JWT using public registry for the signing service account (B) ', logging.INFO)
-    self.log(' --> https://www.googleapis.com/service_accounts/v1/metadata/x509/service-account-b@mineral-minutia-820.iam.gserviceaccount.com ', logging.INFO)
-    
-        
 
   # taken from /oauth2client/crypt.py   
   def _urlsafe_b64encode(self,raw_bytes):

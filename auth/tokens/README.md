@@ -240,27 +240,91 @@ audience = 'SystemC'
 id_scope='scope1 scope2'
 now = int(time.time())
 exptime = now + 3600
-id_token_claim =('{"iss":"%s",'
-            '"scope":"%s",'
-            '"aud":"%s",'
-            '"exp":%s,'
-            '"iat":%s}') %(client_id,id_scope,audience,exptime,now)    
+id_token_claim =('{"iss":"%s","scope":"%s", "aud":"%s","exp":%s,"iat":%s}') %(client_id,id_scope,audience,exptime,now)    
 
 jwt = self._urlsafe_b64encode(jwt_header) + '.' + self._urlsafe_b64encode(unicode(id_token_claim, 'utf-8')) 
 slist = resource.serviceAccounts().signBlob(name='projects/mineral-minutia-820/serviceAccounts/'+client_id, 
                                                   body={'bytesToSign': base64.b64encode(jwt) })
 resp = slist.execute()     
-r = base64.urlsafe_b64encode(base64.decodestring(resp['signature']))
+r = self._urlsafe_b64encode(base64.decodestring(resp['signature']))
 signed_jwt = jwt + '.' + r   
 ```
 
 ![images/id_token.png](images/id_token2.png)
+
+
+The JWT issued may look like the following:
+
+```json
+{
+  "alg": "RS256",
+  "typ": "JWT"
+}.
+{
+  "iss": "service-account-b@mineral-minutia-820.iam.gserviceaccount.com",
+  "scope": "scope1 scope2",
+  "aud": "SystemC",
+  "exp": 1484508490,
+  "iat": 1484504890
+}
+```
+
+A GCP service account has multiple keys that are rotated.  Unless the current keyID is specified in the JWT header, you need to iterate the keys in the keystore URL (shown below) to verify the correct one.
+
+If the key used to sign is: 'cc1080d1a4c61e8cb821331a5a2652dee2c901a1', you may add on the 'kid' header value to the JWT.
+```
+{
+  "alg": "RS256",
+  "typ": "JWT",
+  "kid": "fcce344d3428b0f74f2cf9bf6fb5f99482869862"
+}
+```
 
 Once you have the JWT, you must verify the authenticity of the JWT by verifying against the public certificate.
 The public certs for any Google Service account is visible at URLs similar to:
 For serviceAccount B:
 * JWK Format: [https://www.googleapis.com/service_accounts/v1/jwk/service-account-b@mineral-minutia-820.iam.gserviceaccount.com](https://www.googleapis.com/service_accounts/v1/jwk/service-account-b@mineral-minutia-820.iam.gserviceaccount.com)
 * X509 Format: [https://www.googleapis.com/service_accounts/v1/metadata/x509/service-account-b@mineral-minutia-820.iam.gserviceaccount.com](https://www.googleapis.com/service_accounts/v1/metadata/x509/service-account-b@mineral-minutia-820.iam.gserviceaccount.com)
+
+The following node sample verfies a self-signed JWT:
+
+```javascript
+var jwt = require('jsonwebtoken');
+var jose = require('node-jose');
+var request = require("request")
+
+var jwk_url = 'https://www.googleapis.com/service_accounts/v1/jwk/service-account-b@mineral-minutia-820.iam.gserviceaccount.com';
+skeyid = 'cc1080d1a4c61e8cb821331a5a2652dee2c901a1';
+// A GCP service account has multiple keys that are rotated.  Unless the current keyID is specified in the JWT header, you need to iterate 
+// the keys in the keystore to verify the correct one.
+//skeyid = '5e0918577a1a33e87bfc8621c5914d4f035b91a5';
+var sjwt ='eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzZXJ2aWNlLWFjY291bnQtYkBtaW5lcmFsLW1pbnV0aWEtODIwLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwic2NvcGUiOiJzY29wZTEgc2NvcGUyIiwgImF1ZCI6IlN5c3RlbUMiLCJleHAiOjE0ODQ1MTIxNTIsImlhdCI6MTQ4NDUwODU1Mn0.Ishj6r8-cdOA8kI8aslaKAF23Q8cct3HARUe-TB2YU2cK59_5SoIt7s_MMCG9Ea-PG0LfdGweMBep39d8c-aQS6KE_H2ls1dff990W0lodU_QUrHOZJksSzLMHfjFDRgs3LgF83O4F0VZ50rTrYN0mmwjw1d7EHv7LqHA4TAOQs3bhKte9K3csiYETR3HLqbAvdiO3jog0vWUGU57Mu4DkjWWSvPXnHQv-YWWzeHm5fAIsLiRW1LB9a7gdLZPwbSLlCRs6WrbWtGMuGax6ouBcqE24YzL0YbdH7E6mkM5qE8LeHnUL2e8ZNFBZdDc6y6Q4wq2-S9xEIN7hbk0uYrEQ';
+var decoded = jwt.decode(sjwt,{complete: true});
+var payload = decoded.payload;
+// need to verify the token expiration date (todo)
+var edate = new Date(payload.exp*1000);
+// also verify the audience (intended target) (todo)
+
+// for now go get the public cert to atleast verify the signature.
+request({
+    url: jwk_url,
+    json: true
+}, function (error, response, body) {
+
+    if (!error && response.statusCode === 200) {
+		jose.JWK.asKeyStore(body).
+		     then(function(result) {	       
+		       keystore = result;
+		       key = keystore.get(skeyid);
+	         jose.JWS.createVerify(keystore).
+				   verify(sjwt).then(function(result) {
+				          console.log('>>>>>>>>>> signature verified  <<<<<<<<<<<<<<<<')
+				          console.log(result);
+				        });
+		     });   
+    }
+})
+```
 
 
 ## access_token/id_token script
@@ -275,22 +339,22 @@ pip install requests google-api-python-client httplib2 oauth2client
 
 ```bash
 $python gcs_auth.py --client_id=service-account-b@mineral-minutia-820.iam.gserviceaccount.com
-[2017-01-15 09:22:52.754783] access_token: ya29.ElnUA5Eud5gLD7C8SfR4L2Ch51qZ8jn7smKgstqo0m__F3_8x8PsfDsy023riR-2gbyehkFcIQI5UW2ExpL_7sXzIUwv0KwlnBMZs3ZPLDu321N8IB1AYzor6A
+[2017-01-15 11:29:12.072293] access_token: ya29.ElnUA-HwLE2hVH-y0iz5CgGTywcJNP63eTAI216i7e6cC66vXUQd-X87MvVheZ4ZQlwE31Uv_fOJTZ62hiK8pWFt_rN5xc54ZHCzGB4_8pvrZAJGrolLDYEvPw
 
-[2017-01-15 09:22:53.084889] id_token: eyJhbGciOiJSUzI1NiIsImtpZCI6IjAxYTEwMmYyOGNmOGYzNzk3MTVlZDU5ZWU5ODAzY2VkNTViMDMxOTYifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJpYXQiOjE0ODQ1MDA5NzMsImV4cCI6MTQ4NDUwNDU3MywiYXVkIjoic2VydmljZS1hY2NvdW50LWJAbWluZXJhbC1taW51dGlhLTgyMC5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsInN1YiI6IjEwNDk0MzI5Mzk5Nzk3MTMzMjIyMyIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhenAiOiJzZXJ2aWNlLWFjY291bnQtYkBtaW5lcmFsLW1pbnV0aWEtODIwLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwiZW1haWwiOiJzZXJ2aWNlLWFjY291bnQtYkBtaW5lcmFsLW1pbnV0aWEtODIwLmlhbS5nc2VydmljZWFjY291bnQuY29tIn0.T0rx_C35qld90aFiMxi7jX9vzDRhDm2dP3gS7lyjFt4w7poPQbwLfxYaOZLADy3emy3XRg84jDmv-Ul5-VO0uSKGlnHaTtyC_mxCB9Ak_AlLQ-em--G20siUV2a8gWbW6uOeeNz9krHxqV9St0ogbZ44yA82q7uUujMluOfgB30oJeNBzyiD8aC3o6Gp8vUZ3bj3rWdtsOfSpByFy-o7FiArglmFt9zNoXdBRF-PF-RgVPNdAqc_dPlhSfXg8ebvtDWO0ydGuSP3J-uF19RbjJUQLruxGyW6MMAY_95uUPOVc825oSvYn88Aoo41M39EBys5n88KTUwknvWqJI9eSg
-[2017-01-15 09:22:53.207220]  ID_TOKEN Validation: 
+[2017-01-15 11:29:12.450104] id_token: eyJhbGciOiJSUzI1NiIsImtpZCI6IjAxYTEwMmYyOGNmOGYzNzk3MTVlZDU5ZWU5ODAzY2VkNTViMDMxOTYifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJpYXQiOjE0ODQ1MDg1NTIsImV4cCI6MTQ4NDUxMjE1MiwiYXVkIjoic2VydmljZS1hY2NvdW50LWJAbWluZXJhbC1taW51dGlhLTgyMC5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsInN1YiI6IjEwNDk0MzI5Mzk5Nzk3MTMzMjIyMyIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhenAiOiJzZXJ2aWNlLWFjY291bnQtYkBtaW5lcmFsLW1pbnV0aWEtODIwLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwiZW1haWwiOiJzZXJ2aWNlLWFjY291bnQtYkBtaW5lcmFsLW1pbnV0aWEtODIwLmlhbS5nc2VydmljZWFjY291bnQuY29tIn0.P0juBBi-GGkGnpKR5FaKKXBWxrFsxk25TRqP5fbXklPpMgn5QmAidwt6NG2qK-sE5ebVIj-1EEA7gTub83PK-CCUN4KGDjwhY7Egoodyppdz2TAW0Q5ObKsVUHtwgFNUf_9xSaxorCS202yLcontWjYpRihFFYGrfdvLFOdyeJZ3Iz4NAQdfU_Ouk1bjFt7M-gfvJgIaAQrxNfyhnwsdEDLRd-Dn53V3P73IRAneLuAl2wzQLPYKb2uRCe0u9kjQEjTRQu19tWjLBx59no9nxjXwKEQpFhZm4KqSSIR6xOJYvf3_m0oOwrC8mDGeOLoV8sis1ravtBCp3e9oESl1-g
+
+[2017-01-15 11:29:12.595477]  ID_TOKEN Validation: 
  {
     "aud": "service-account-b@mineral-minutia-820.iam.gserviceaccount.com", 
     "iss": "https://accounts.google.com", 
     "email_verified": true, 
-    "exp": 1484504573, 
+    "exp": 1484512152, 
     "azp": "service-account-b@mineral-minutia-820.iam.gserviceaccount.com", 
-    "iat": 1484500973, 
+    "iat": 1484508552, 
     "email": "service-account-b@mineral-minutia-820.iam.gserviceaccount.com", 
     "sub": "104943293997971332223"
 } 
 
-[2017-01-15 09:22:53.443512] Self-signed id_token:: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzZXJ2aWNlLWFjY291bnQtYkBtaW5lcmFsLW1pbnV0aWEtODIwLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwic2NvcGUiOiJzZXJ2aWNlLWFjY291bnQtYkBtaW5lcmFsLW1pbnV0aWEtODIwLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwiYXVkIjoic2VydmVyQyIsImV4cCI6MTQ4NDUwNDU3MywiaWF0IjoxNDg0NTAwOTczfQ.RbhQzp32Pp-n_Q8lJQSlMBnnwFWOntm3niwbg9J7aiOUwb7TPu-c8Sn5Ng3pECZRIhsTdGw7ZgdjsMBXYGIXD9o6yGj6EnKzST75Y8BDygFQYMUSccOZjDXWTTnPGJc7s1km-rmMdXyBvovEV-rVj8VKLECC1Ny3LM6qoXXZHEA4bOxjL4TxW7nUQ6nfDGap6kfHPMsx4TNn5hJdC9u4HZjHuBeGHgNUjYBQec6fZrpHrZkdjphbUSx6BN-LQBuObfQXN3haejT0JaleiP3MjeyKMNVgbrql5Fl5O-A22a-QEgMP0VN-fDX7IP4rN2VA3JC2v8BAkDbUupyJ7wJB-A==
-[2017-01-15 09:22:53.443695] Verify JWT using public registry for the signing service account (B) 
-[2017-01-15 09:22:53.443775]  --> https://www.googleapis.com/service_accounts/v1/metadata/x509/service-account-b@mineral-minutia-820.iam.gserviceaccount.com 
+[2017-01-15 11:29:12.693403] Self-signed id_token:: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzZXJ2aWNlLWFjY291bnQtYkBtaW5lcmFsLW1pbnV0aWEtODIwLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwic2NvcGUiOiJzY29wZTEgc2NvcGUyIiwgImF1ZCI6IlN5c3RlbUMiLCJleHAiOjE0ODQ1MTIxNTIsImlhdCI6MTQ4NDUwODU1Mn0.Ishj6r8-cdOA8kI8aslaKAF23Q8cct3HARUe-TB2YU2cK59_5SoIt7s_MMCG9Ea-PG0LfdGweMBep39d8c-aQS6KE_H2ls1dff990W0lodU_QUrHOZJksSzLMHfjFDRgs3LgF83O4F0VZ50rTrYN0mmwjw1d7EHv7LqHA4TAOQs3bhKte9K3csiYETR3HLqbAvdiO3jog0vWUGU57Mu4DkjWWSvPXnHQv-YWWzeHm5fAIsLiRW1LB9a7gdLZPwbSLlCRs6WrbWtGMuGax6ouBcqE24YzL0YbdH7E6mkM5qE8LeHnUL2e8ZNFBZdDc6y6Q4wq2-S9xEIN7hbk0uYrEQ
+
 ```
