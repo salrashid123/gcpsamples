@@ -1,7 +1,6 @@
 # Using serviceAccountActor IAM role for account impersonation on Google Cloud Platform
 
-The serviceAccountActor IAM role on Google Cloud has some very useful and powerful capabilities.  It is an IAM role that you allows you to grant another user  
-or serviceAccount the ability to impersonate yet another service Account.   In this way, you can have service account A impersonate B by acquiring access_tokens or id_tokens for B.
+The serviceAccountActor IAM role on Google Cloud has some very useful and powerful capabilities.  It is an IAM role that you allows you to grant another user or serviceAccount the ability to impersonate yet another service Account.   In this way, you can have service account A impersonate B by acquiring access_tokens or id_tokens for B.
 
 This article covers how you can acquire id and access tokens for service account B __by__ service account A.  You can also have a end-user assigned the serviceAccountActor role too.
 For clarity, I've separated out the id and access token steps below.
@@ -30,9 +29,7 @@ In the example screenshot,
 
 __Note:__ serviceAccountB_ID does not even have any valid certificate keys.  This means there are no valid certificate key files.
 
-
 > As mentioned, you do NOT have to use a service account to impersonate another one; you can easily assign the serviceAccountActor role to an end user (e.g. user@domain.com).
-
 
 ## Initialize an IAM client for service Account A
 Since we are doing operations as service Account A, we need to create a client for access to IAM:
