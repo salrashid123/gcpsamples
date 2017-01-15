@@ -11,7 +11,7 @@ Note:
   * Google issued id_token:  these id_tokens are signed directly by Google's Certificates and simply assert the callers identity.
 
 One final mechansim described here is creating an arbitrary JWT using Service Account's private key.  These JWTs are signed by one of the keys associated with a given service account and can convey additional verifiable
-information within the claim such as the intended target (audiene) and custom scopes.
+information within the claim such as the intended target (audience) and custom scopes.
 
 For more information see 
 * [Acting as a service account](https://cloud.google.com/iam/docs/understanding-service-accounts#acting_as_a_service_account)
@@ -68,8 +68,8 @@ the JWT needs to be in the form:
     "iss": "serviceAccountB_ID",
     "scope": "scope1 scope2",
     "aud": "https://accounts.google.com/o/oauth2/token",
-    "exp":  ___expiration_time__,
-    "iat":  __issue_time__
+    "exp":  expiration_time,
+    "iat":  issue_time
 }    
 ```
 
@@ -91,11 +91,11 @@ slist = resource.serviceAccounts().signBlob(name='projects/mineral-minutia-820/s
                                                   body={'bytesToSign': base64.b64encode(jwt) })
 
 resp = slist.execute()     
-r = base64.urlsafe_b64encode(base64.decodestring(resp['signature']))
+r = self._urlsafe_b64encode(base64.decodestring(resp['signature']))
 signed_jwt = jwt + '.' + r    
 ```
 
-### Trnsmit the singed JWT to Google to get an access_token
+### Transmit the singed JWT to Google to get an access_token
 ```python
 url = 'https://accounts.google.com/o/oauth2/token'
 data = {'grant_type' : 'assertion',
@@ -164,8 +164,8 @@ The first step is to create an unsigned JWT but have the scope to the service Ac
     "iss": "serviceAccountB_ID",
     "scope": "serviceAccountB_ID",
     "aud": "https://www.googleapis.com/oauth2/v4/token",
-    "exp":  ___expiration_time__,
-    "iat": __issue_time__
+    "exp":  expiration_time,
+    "iat":  issue_time
 }
 ```
 Note the audience is different than for an access_token.
@@ -184,7 +184,7 @@ Now that we have the signature for the JWT, we need to append the signature to t
 slist = resource.serviceAccounts().signBlob(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
                                             body={'bytesToSign': base64.b64encode(jwt) })
 resp = slist.execute()     
-r = base64.urlsafe_b64encode(base64.decodestring(resp['signature']))
+r = self._urlsafe_b64encode(base64.decodestring(resp['signature']))
 signed_jwt = jwt + '.' + r    
 ```
 
@@ -276,7 +276,7 @@ If the key used to sign is: 'cc1080d1a4c61e8cb821331a5a2652dee2c901a1', you may 
 {
   "alg": "RS256",
   "typ": "JWT",
-  "kid": "fcce344d3428b0f74f2cf9bf6fb5f99482869862"
+  "kid": "cc1080d1a4c61e8cb821331a5a2652dee2c901a1"
 }
 ```
 
@@ -321,7 +321,7 @@ request({
 				          console.log('>>>>>>>>>> signature verified  <<<<<<<<<<<<<<<<')
 				          console.log(result);
 				        });
-		     });   
+		     });
     }
 })
 ```

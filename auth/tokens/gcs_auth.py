@@ -65,7 +65,7 @@ class gcs_auth(object):
                                                   body={'bytesToSign': base64.b64encode(jwt) })
 
     resp = slist.execute()     
-    r = base64.urlsafe_b64encode(base64.decodestring(resp['signature']))
+    r = self._urlsafe_b64encode(base64.decodestring(resp['signature']))
     signed_jwt = jwt + '.' + r    
 
   
@@ -109,7 +109,7 @@ class gcs_auth(object):
                                                   body={'bytesToSign': base64.b64encode(jwt) })
 
     resp = slist.execute()     
-    r = base64.urlsafe_b64encode(base64.decodestring(resp['signature']))
+    r = self._urlsafe_b64encode(base64.decodestring(resp['signature']))
     signed_jwt = jwt + '.' + r    
 
     url = 'https://www.googleapis.com/oauth2/v4/token'
