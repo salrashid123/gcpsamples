@@ -312,20 +312,19 @@ request({
     json: true
 }, function (error, response, body) {
     if (!error && response.statusCode === 200) {
- 		 jose.JWK.asKeyStore(body).
-		     then(function(result) {	       
-		       keystore = result;
-		       key = keystore.get(skeyid);
-	         jose.JWS.createVerify(keystore).verify(sjwt)
-					 		  .then(function(result) { 
-				            console.log('Signature Verification Suceeded')
-				            console.log(result);
-				        },  function(error) {
+      jose.JWK.asKeyStore(body).
+        then(function(result) {
+          keystore = result;
+          key = keystore.get(skeyid);
+          jose.JWS.createVerify(keystore).verify(sjwt)
+               .then(function(result) { 
+                    console.log('Signature Verification Suceeded')
+                    console.log(result);
+                  }, function(error) {
                     console.log('Signature Verification Failed');
-                }
-					 );
-               
-		     });   
+                  }
+               );
+          });
     }
 })
 ```
