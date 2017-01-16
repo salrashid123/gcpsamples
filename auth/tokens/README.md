@@ -10,7 +10,7 @@ Note:
 * id_tokens are used to identify the the service Account B to some other system.  The ID token contains digitally signed information that can be validated to assert who the token was issued to.
   * Google issued id_token:  these id_tokens are signed directly by Google's Certificates and simply assert the callers identity.
 
-One final mechansim described here is creating an arbitrary JWT using Service Account's private key.  These JWTs are signed by one of the keys associated with a given service account and can convey additional verifiable
+One final mechanism described here is creating an arbitrary JWT using Service Account's private key.  These JWTs are signed by one of the keys associated with a given service account and can convey additional verifiable
 information within the claim such as the intended target (audience) and custom scopes.
 
 For more information see 
@@ -73,7 +73,7 @@ the JWT needs to be in the form:
 }    
 ```
 
-Set the scopes to limit the capabilities of a givne token.  A list of scopes can be found [here](https://developers.google.com/identity/protocols/googlescopes).
+Set the scopes to limit the capabilities of a given token.  A list of scopes can be found [here](https://developers.google.com/identity/protocols/googlescopes).
 
 ### Sign the JWT using Service Account A credentials
 Now that we have an unsigned JWT claim set, we need to sign it using A's credentials but instruct __.signBlob()__ to sign it for B:
@@ -111,7 +111,7 @@ access_token = parsed.get('access_token')
 
 Now you have an access token.  With this, you can access any GoogleAPI that is scoped correctly and to which B has access.
 
-One way to initialize a Google API client given a raw access_token is to use [oauth2client.client.AccessTokenCredentials]()http://oauth2client.readthedocs.io/en/latest/source/oauth2client.client.html#oauth2client.client.AccessTokenCredentials.
+One way to initialize a Google API client given a raw access_token is to use [oauth2client.client.AccessTokenCredentials](http://oauth2client.readthedocs.io/en/latest/source/oauth2client.client.html#oauth2client.client.AccessTokenCredentials).
 Other languages have similar bindings. 
 
 You can also verify the access_token by interrogating the __tokeninfo__ endpoint as shown here:
@@ -133,7 +133,7 @@ curl https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=ya29.ElnUAws0Mf
 ![images/access_token.png](images/access_token.png)
 
 ### access_token Revocation
-By default, access_tokens are valid for 1hour from the time they are issued.  You can revoke them prior to that by invoking the oauth2 revocaiton endpoint:
+By default, access_tokens are valid for 1hour from the time they are issued.  You can revoke them prior to that by invoking the oauth2 revocation endpoint:
 ```
 curl https://accounts.google.com/o/oauth2/revoke?token={token}
 ```
@@ -147,8 +147,8 @@ to google resources (eg. GCS, PubSub, etc) while id_tokens simply assert the bea
 These id_tokens are digitally signed by google so given an id_token, a system can verify its authenticity by verifying its signature against Google's public certificate.
 The id_tokens are simply convey who the caller is (not what it can do).  
 
-If you need two system to communicate securely, you can pass (via SSL), an id_token.  The recieving system can localy validate the token using a cached copy of Google's certificate.
-However, Google-issued ID tokens simply identify the caller and cannot assert if the recipient of the token is the intended target.  For that, you can mint a Service Account id_token
+If you need two system to communicate securely, you can pass (via SSL), an id_token.  The receiving system can locally validate the token using a cached copy of Google's certificate.
+However, Google-issued ID tokens simply identify the caller and cannot assert if the receipient of the token is the intended target.  For that, you can mint a Service Account id_token
 as described below.
 
 See:
@@ -167,7 +167,7 @@ The first step is to create an unsigned JWT but have the scope to the service Ac
     "exp":  expiration_time,
     "iat":  issue_time
 }
-```
+```z
 Note the audience is different than for an access_token.
 
 ### Sign the JWT using Service Account A credentials
@@ -189,7 +189,7 @@ signed_jwt = jwt + '.' + r
 ```
 
 
-### Trnsmit the singed JWT to Google to get an access_token
+### Transmit the signed JWT to Google to get an access_token
 ```python
 url = 'https://www.googleapis.com/oauth2/v4/token'
 data = {'grant_type' : 'urn:ietf:params:oauth:grant-type:jwt-bearer',
@@ -233,7 +233,7 @@ The public certificate used by Google to sign can be found at:
 Users can also generate a JWT that is signed by a given Service Account.  The steps here are very simple:  create a JWT and use .signBlob() to sign the header and claims.  The signedJWTs
 can be used to verify caller identity as well as see if the recipient is the intended target.  Finally, you can customize the scopes fields to convey capability for the token.
 
-You can specify the intended target for the JWT using the __aud__ field.  In this case, the audience is 'System C'.  The scpes field is arbitrary and user-defined.
+You can specify the intended target for the JWT using the __aud__ field.  In this case, the audience is 'System C'.  The scopes field is arbitrary and user-defined.
 
 ```python
 audience = 'SystemC'
@@ -304,31 +304,35 @@ var payload = decoded.payload;
 // need to verify the token expiration date (todo)
 var edate = new Date(payload.exp*1000);
 // also verify the audience (intended target) (todo)
-
+// https://www.npmjs.com/package/node-jose#verifying-a-jws
 // for now go get the public cert to atleast verify the signature.
+var request = require("request")
 request({
     url: jwk_url,
     json: true
 }, function (error, response, body) {
-
     if (!error && response.statusCode === 200) {
-		jose.JWK.asKeyStore(body).
+ 		 jose.JWK.asKeyStore(body).
 		     then(function(result) {	       
 		       keystore = result;
 		       key = keystore.get(skeyid);
-	         jose.JWS.createVerify(keystore).
-				   verify(sjwt).then(function(result) {
-				          console.log('>>>>>>>>>> signature verified  <<<<<<<<<<<<<<<<')
-				          console.log(result);
-				        });
-		     });
+	         jose.JWS.createVerify(keystore).verify(sjwt)
+					 		  .then(function(result) { 
+				            console.log('Signature Verification Suceeded')
+				            console.log(result);
+				        },  function(error) {
+                    console.log('Signature Verification Failed');
+                }
+					 );
+               
+		     });   
     }
 })
 ```
 
 
 ## access_token/id_token script
-You can find the script refreenced here on my [github page](https://github.com/salrashid123/gcpsamples/blob/master/auth/tokens/gcs_auth.py).  To use it, you need to download a certificate for service Account A, assign the serviceAccountActor role to it
+You can find the script referenced here on my [github page](https://github.com/salrashid123/gcpsamples/blob/master/auth/tokens/gcs_auth.py).  To use it, you need to download a certificate for service Account A, assign the serviceAccountActor role to it
 for B, then install the libraries and invoke it with service account B's ID value
 
 ```bash
