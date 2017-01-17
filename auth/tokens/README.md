@@ -167,7 +167,7 @@ The first step is to create an unsigned JWT but have the scope to the service Ac
     "exp":  expiration_time,
     "iat":  issue_time
 }
-```z
+```
 Note the audience is different than for an access_token.
 
 ### Sign the JWT using Service Account A credentials
