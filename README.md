@@ -16,8 +16,21 @@ The samples use [Application Default Credentials](https://developers.google.com/
 
 You can always specify the target source to acquire credentials by using intent specific targets such as:  ComputeCredentials, UserCredentials or ServiceAccountCredential.
 
-The following examples use the Oauth2 *service* to demonstrate the initialized client.  
+There are two types of client libraries you can use to connect to Google APIs:  
+* Google Cloud Client Libraries
+* Gooogle API Client Libraries
 
+The basic differences is the Cloud Client libraries are idomatic, has [gcloud-based emulators](https://cloud.google.com/sdk/gcloud/reference/beta/emulators/) and much eaiser to use.  
+
+It is recommended to use Cloud Client Libraries whereever possible. Although this article primarily describes the API Client libraries, the python code section describes uses of Cloud Client libraries with Google Cloud Storage.
+
+For more information, see [Client Libraries Explained](https://cloud.google.com/apis/docs/client-libraries-explained).
+
+The following examples use the Oauth2 *service* to demonstrate the initialized client using Google API Client Libraries.  The first section is about the different client libraries you can use.
+
+* [Cloud Client Libraries and API Client Libraries](#googlelibraries)
+    - Cloud Client Libraries
+    - API Client Libraries
 * [Python](#python)
     - Appengine
     - ComputeEngine
@@ -49,6 +62,125 @@ For more inforamtion, see:
 * [oauth2 protocol](https://developers.google.com/identity/protocols/OAuth2)
 * [oauth2 service](https://developers.google.com/apis-explorer/#p/oauth2/v2/)
 * [Service Accounts](https://developers.google.com/identity/protocols/OAuth2ServiceAccount#overview)
+
+### GoogleLibraries
+As described in the introduciton, this section details the two types of libraries you can use to access Google Services:
+
+#### Google Cloud Client Libraries
+These libraries are idomatic, easy to use and even support the [gcloud-based emulator framework](https://cloud.google.com/sdk/gcloud/reference/beta/emulators/).  This is the
+recommended library set to use to access Google Cloud APIs.
+
+For more information, see:
+
+* [Application DefaultCredentials](https://developers.google.com/identity/protocols/application-default-credentials)
+* [google-cloud](https://googlecloudplatform.github.io/google-cloud-python/)
+* [google-auth package](https://google-auth.readthedocs.io/en/latest/)
+* [google-auth Users Guide](https://google-auth.readthedocs.io/en/latest/user-guide.html)
+
+The following example describes various ways to initialize a service account to list the Google Cloud Storage buckets the account has access to.  It also shows listing the buckets
+using the default account currently initialized by gcloud.
+
+To use the mechanisms here, you need to initialize gcloud's application defaults:
+
+```bash
+gcloud beta auth application-default login
+```
+It uses the google-storage client described here: [Storage Client](http://gcloud-python.readthedocs.io/en/latest/storage-client.html)
+
+```
+virtualenv env 
+source env/bin/activate
+pip install google-cloud
+
+Name: google-cloud
+Version: 0.22.0
+```
+
+List buckets using google.oauth2's service_account directly:
+
+```python
+from google.cloud import storage
+import google.auth
+from google.oauth2 import service_account
+
+credentials = service_account.Credentials.from_service_account_file('YOUR_JSON_CERT.json')
+credentials = credentials.with_scopes(['https://www.googleapis.com/auth/devstorage.read_write'])
+
+client = storage.Client(credentials=credentials)
+buckets = client.list_buckets()
+for bkt in buckets:
+  print bkt
+```
+
+List buckets using an environment variable and then google.auth.default() credentials.
+```python
+from google.cloud import storage
+import google.auth
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "YOUR_JSON_CERT.json"
+credentials, project = google.auth.default()    
+client = storage.Client(credentials=credentials)
+buckets = client.list_buckets()
+for bkt in buckets:
+  print bkt
+```
+
+List buckets using the default account on the current gcloud cli
+```python
+from google.cloud import storage
+import google.auth
+
+credentials, project = google.auth.default()    
+client = storage.Client(credentials=credentials)
+buckets = client.list_buckets()
+for bkt in buckets:
+  print bkt
+```
+
+List buckets using the storage client directly:
+```python
+import os
+from google.cloud import storage
+
+client = storage.Client.from_service_account_json("YOUR_JSON_CERT.json")
+buckets = client.list_buckets()
+for bkt in buckets:
+  print bkt
+```
+
+#### Google API Client Library for Python
+
+The following describes the older, non-idomatic libraries.  As you can see, its much easier using the idomatic library set.
+* [GCS JSON API](https://cloud.google.com/storage/docs/json_api/v1/buckets/list)
+
+```
+virtualenv env 
+source env/bin/activate
+pip install --upgrade requests google-api-python-client httplib2 oauth2client
+
+```
+
+```python
+import os
+import httplib2
+from apiclient.discovery import build
+from oauth2client.service_account import ServiceAccountCredentials
+from oauth2client.client import GoogleCredentials
+
+scope='https://www.googleapis.com/auth/devstorage.read_only'
+
+#os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "YOUR_JSON_CERT.json"
+credentials = GoogleCredentials.get_application_default()
+if credentials.create_scoped_required():
+  credentials = credentials.create_scoped(scope)
+http = httplib2.Http()
+credentials.authorize(http)
+
+service = build(serviceName='storage', version= 'v1',http=http)
+resp = service.buckets().list(project='YOUR_PROJECT').execute()
+for i in resp['items']:
+  print i['name']
+```
 
 ###Python
 * [Google API Client Library for Python](https://developers.google.com/api-client-library/python/)
