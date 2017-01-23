@@ -26,6 +26,8 @@ It is recommended to use Cloud Client Libraries whereever possible. Although thi
 
 For more information, see [Client Libraries Explained](https://cloud.google.com/apis/docs/client-libraries-explained).
 
+This article also describes how to use IAM's serviceAccountActor role to issue access_tokens, id_tokens and JWT.  For more information on that, see [auth/tokens/](auth/tokens).
+
 The following examples use the Oauth2 *service* to demonstrate the initialized client using Google API Client Libraries.  The first section is about the different client libraries you can use.
 
 * [Cloud Client Libraries and API Client Libraries](#googlelibraries)
@@ -56,6 +58,10 @@ The following examples use the Oauth2 *service* to demonstrate the initialized c
     - ComputeEngine
     - Service Account File
     - Userflow
+* [serviceAccountActor role for impersonation](auth/tokens)
+    - access_token
+    - id_token
+    - JWT
 
 
 For more inforamtion, see:
