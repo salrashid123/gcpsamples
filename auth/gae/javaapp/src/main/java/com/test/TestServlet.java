@@ -18,6 +18,12 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.oauth2.*;
 import com.google.api.services.oauth2.model.Userinfoplus;
 
+import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
+import java.util.Collection;
+import java.util.Iterator;
+
 /* 
    Edit WEB-INF/lib/appengine-web.xml  with  your APPID 
    Set appengien administrator/deployes email in build.gradle
@@ -55,6 +61,15 @@ public class TestServlet extends HttpServlet {
 		Userinfoplus ui = service.userinfo().get().execute(); 
 		resp.getWriter().println(ui.getEmail());
 	    
+
+          // Using Google Cloud APIs
+		  Storage  storage_service = StorageOptions.defaultInstance().service();
+        
+          Iterator<Bucket> bucketIterator = storage_service.list().iterateAll();
+          while (bucketIterator.hasNext()) {
+            System.out.println(bucketIterator.next());
+          }		
+
 	}
 }
 	

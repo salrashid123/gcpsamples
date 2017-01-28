@@ -189,7 +189,7 @@ signed_jwt = jwt + '.' + r
 ```
 
 
-### Transmit the signed JWT to Google to get an access_token
+### Transmit the signed JWT to Google to get an id_token
 ```python
 url = 'https://www.googleapis.com/oauth2/v4/token'
 data = {'grant_type' : 'urn:ietf:params:oauth:grant-type:jwt-bearer',

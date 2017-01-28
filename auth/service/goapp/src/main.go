@@ -1,13 +1,19 @@
 package main
 
 import (
+	"log"
+
+	"cloud.google.com/go/storage"
+
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	oauthsvc "google.golang.org/api/oauth2/v2"
-	"log"
-	//        "io/ioutil"
-	"os"
+	//"io/ioutil"
+	//"os"
+
+	"google.golang.org/api/iterator"
+	//"google.golang.org/api/option"
 )
 
 func main() {
@@ -25,7 +31,7 @@ func main() {
 	//src := conf.TokenSource(oauth2.NoContext)
 	//client := conf.Client(oauth2.NoContext)
 
-	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", serviceAccountJSONFile)
+	//os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", serviceAccountJSONFile)
 	src, err := google.DefaultTokenSource(oauth2.NoContext, oauthsvc.UserinfoEmailScope)
 	if err != nil {
 		log.Fatalf("Unable to acquire token source: %v", err)
@@ -41,4 +47,32 @@ func main() {
 		log.Fatalf("Unable to get userinfo: ", err)
 	}
 	log.Printf("UserInfo: %v", ui.Email)
+
+	// Using Google Cloud APIs
+
+	ctx := context.Background()
+	/*
+		tokenSource, err := google.DefaultTokenSource(oauth2.NoContext, storage.ScopeReadOnly)
+		if err != nil {
+			log.Fatalf("Unable to acquire token source: %v", err)
+		}
+		storeageClient, err := storage.NewClient(ctx, option.WithTokenSource(tokenSource))
+	*/
+
+	storeageClient, err := storage.NewClient(ctx)
+	if err != nil {
+		log.Fatalf("Unable to acquire storage Client: %v", err)
+	}
+
+	it := storeageClient.Buckets(ctx, "mineral-minutia-820")
+	for {
+		bucketAttrs, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Unable to acquire storage Client: %v", err)
+		}
+		log.Printf(bucketAttrs.Name)
+	}
 }

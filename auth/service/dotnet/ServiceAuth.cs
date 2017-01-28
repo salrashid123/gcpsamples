@@ -11,6 +11,8 @@ using Google.Apis.Oauth2.v2;
 using Google.Apis.Oauth2.v2.Data;
 using Google.Apis.Services;
 
+using Google.Storage.V1;
+
 namespace Oauth2Harness
 {
     internal class Program 
@@ -57,6 +59,16 @@ namespace Oauth2Harness
                 ApplicationName = "Oauth2 Sample",
             });
             Console.WriteLine(service.Userinfo.Get().Execute().Email);
+
+
+            var client = StorageClient.Create();
+            
+            foreach (var obj in client.ListObjects("your_project", ""))
+            {
+                Console.WriteLine(obj.Name);
+            }
+
+
         }
 
     }

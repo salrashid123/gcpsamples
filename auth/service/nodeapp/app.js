@@ -7,7 +7,7 @@ var google = require('googleapis');
 var logger = log4js.getLogger();
 
 
-var key = require('./YOUR_KEY.json');
+var key = require('/path/to/keyfile.json');
 var authClient = new google.auth.JWT(key.client_email, null, key.private_key, ['https://www.googleapis.com/auth/userinfo.email'], null);
 
 authClient.authorize(function(err, tokens) {
@@ -26,3 +26,20 @@ authClient.authorize(function(err, tokens) {
   });
 
 });
+
+
+var gcloud = require('google-cloud')({
+  keyFilename: '/path/to/keyfile.json'
+});
+
+var gcs = gcloud.storage();
+
+gcs.getBuckets(function(err, buckets) {
+  if (!err) {
+  	buckets.forEach(function(value){
+  			logger.info(value.id);
+	});    
+  }
+});
+
+

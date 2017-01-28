@@ -21,3 +21,15 @@ service.userinfo.get(function(err, info) {
    }
    logger.info(info.email);
 });
+
+
+var gcloud = require('google-cloud');
+var gcs = gcloud.storage();
+
+gcs.getBuckets(function(err, buckets) {
+  if (!err) {
+  	buckets.forEach(function(value){
+  			logger.info(value.id);
+	});    
+  }
+});

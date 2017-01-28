@@ -7,6 +7,7 @@
   "dependencies": {
     "log4js": "^0.6.27",    
     "google-auth-library": "~0.9.4",
-    "googleapis": "2.1.1"
+    "googleapis": "2.1.1",
+    "google-cloud": ""      
   }
 }

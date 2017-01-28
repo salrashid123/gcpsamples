@@ -11,6 +11,12 @@ import com.google.api.services.oauth2.Oauth2;
 import com.google.api.services.oauth2.Oauth2Scopes;
 import com.google.api.services.oauth2.model.Userinfoplus;
 
+import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
+import java.util.Collection;
+import java.util.Iterator;
+
 public class TestApp {
 	public static void main(String[] args) {
 		TestApp tc = new TestApp();
@@ -30,6 +36,17 @@ public class TestApp {
 			            .build();				            
 			Userinfoplus ui = service.userinfo().get().execute();
 			System.out.println(ui.getEmail());
+
+
+
+          // Using Google Cloud APIs
+		  Storage  storage_service = StorageOptions.defaultInstance().service();
+        
+          Iterator<Bucket> bucketIterator = storage_service.list().iterateAll();
+          while (bucketIterator.hasNext()) {
+            System.out.println(bucketIterator.next());
+          }	
+
 		} 
 		catch (Exception ex) {
 			System.out.println("Error:  " + ex);
