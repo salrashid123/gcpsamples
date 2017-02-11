@@ -167,7 +167,27 @@ for bkt in buckets:
   print bkt
 ```
 
+##### Iterators
 
+```python
+import os
+#os.environ["GOOGLE_CLOUD_DISABLE_GRPC"] = "true"
+
+from google.cloud import logging
+from google.cloud.logging import DESCENDING
+
+FILTER = 'resource.type="gae_app" AND logName="projects/mineral-minutia-820/logs/appengine.googleapis.com%2Frequest_log" AND protoPayload.resource="/"'
+client = logging.Client()
+iterator = client.list_entries(filter_=FILTER, order_by=DESCENDING)
+for page in iterator.pages:
+  print('    Page number: %d' % (iterator.page_number,))
+  print('  Items in page: %d' % (page.num_items,))
+  print('Items remaining: %d' % (page.remaining,))
+  print('Next page token: %s' % (iterator.next_page_token,))  
+  print('----------------------------')    
+  for entry in page:
+      print(entry.timestamp)
+```
 #### Cloud Java
 
 * [http://googlecloudplatform.github.io/google-cloud-java/0.8.0/index.html](http://googlecloudplatform.github.io/google-cloud-java/0.8.0/index.html)
