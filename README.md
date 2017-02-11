@@ -169,6 +169,8 @@ for bkt in buckets:
 
 ##### Iterators
 
+see [google cloud python iterators](https://googlecloudplatform.github.io/google-cloud-python/latest/iterators.html)
+
 ```python
 import os
 #os.environ["GOOGLE_CLOUD_DISABLE_GRPC"] = "true"
