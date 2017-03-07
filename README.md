@@ -924,3 +924,65 @@ Credentials from the GoogleAPIs userflow is usually stored at
 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
 or c:\Users\%USER%\AppData\Roaming\Google.Apis.Auth
 ```
+
+#### Using API through Proxy
+
+
+* The following is curated from:
+[https://kzhendev.wordpress.com/2015/04/28/accessing-google-apis-through-a-proxy-with-net/](https://kzhendev.wordpress.com/2015/04/28/accessing-google-apis-through-a-proxy-with-net/)
+
+
+```csharp
+using System.Net;
+using System.Net.Http;
+using System.Security.Cryptography.X509Certificates;
+
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Oauth2.v2;
+using Google.Apis.Services;
+using Google.Apis.Http;
+
+
+            string CREDENTIAL_FILE_PKCS12 = "c:\\your_cert.p12"; 
+            string serviceAccountEmail = "your_svc_account@project.iam.gserviceaccount.com";
+            var certificate = new X509Certificate2(CREDENTIAL_FILE_PKCS12, "notasecret",X509KeyStorageFlags.Exportable);
+            ServiceAccountCredential credential = new ServiceAccountCredential(
+               new ServiceAccountCredential.Initializer(serviceAccountEmail)
+               {
+                   Scopes = new[] { Oauth2Service.Scope.UserinfoEmail },
+                   HttpClientFactory = new ProxySupportedHttpClientFactory()
+               }.FromCertificate(certificate));
+
+
+            var service = new Oauth2Service(new BaseClientService.Initializer()
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = "Oauth2 Sample",
+                HttpClientFactory = new ProxySupportedHttpClientFactory()
+            });
+
+
+
+public class ProxySupportedHttpClientFactory : HttpClientFactory
+{
+    protected override HttpMessageHandler CreateHandler(CreateHttpClientArgs args)
+    {
+
+        ICredentials credentials = new NetworkCredential("user1", "user1");
+
+        var proxy = new WebProxy("http://192.168.1.6:3128", true, null, credentials);
+
+        var webRequestHandler = new WebRequestHandler()
+        {
+            UseProxy = true,
+            Proxy = proxy,
+            UseCookies = false
+        };
+
+        return webRequestHandler;
+    }
+}
+
+
+
+```
