@@ -20,13 +20,10 @@ from oauth2client.client import GoogleCredentials
 from oauth2client.client import verify_id_token
 from oauth2client.crypt import AppIdentityError
 
-
-
 class gcs_auth(object):
 
   
   def __init__(self, client_id):
-
 
     ## First initialize IAM for the 'Master Service Account '
 
@@ -39,7 +36,6 @@ class gcs_auth(object):
 
     service = build(serviceName='iam', version= 'v1',http=http)
     resource = service.projects()
-
 
     # ----------------------------------------------------  access_token -----------------------------------   
 

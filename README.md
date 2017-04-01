@@ -983,6 +983,4 @@ public class ProxySupportedHttpClientFactory : HttpClientFactory
     }
 }
 
-
-
 ```
