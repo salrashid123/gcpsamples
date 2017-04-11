@@ -206,9 +206,17 @@ The various credential types can be found here:
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
-import java.util.Collection;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Blob.BlobSourceOption;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
+
+import com.google.cloud.storage.Storage.SignUrlOption;
+import java.util.concurrent.TimeUnit;
+import java.net.URL;
 import java.util.Iterator;
 import java.io.FileInputStream;
+
 
 //import com.google.auth.oauth2.ServiceAccountCredentials;
 
@@ -227,7 +235,12 @@ Storage  storage_service = StorageOptions.defaultInstance().service();
 Iterator<Bucket> bucketIterator = storage_service.list().iterateAll();
 while (bucketIterator.hasNext()) {
   System.out.println(bucketIterator.next());
-}	
+}
+
+
+URL signedUrl = storage_service.signUrl(BlobInfo.newBuilder("your_project", "a.txt").build(), 60,  TimeUnit.SECONDS);
+System.out.println(signedUrl);
+
 ```
 
 #### Cloud Go
