@@ -195,6 +195,7 @@ for page in iterator.pages:
 * [http://googlecloudplatform.github.io/google-cloud-java/0.8.0/index.html](http://googlecloudplatform.github.io/google-cloud-java/0.8.0/index.html)
 * [StorageExample](https://github.com/GoogleCloudPlatform/google-cloud-java/blob/master/google-cloud-examples/src/main/java/com/google/cloud/examples/storage/StorageExample.java)
 * [Java Cloud Examples](https://github.com/GoogleCloudPlatform/java-docs-samples)
+* [Google Extensions for Java (GAX)](http://googleapis.github.io/gax-java/)
 
 The following describes using java default credentials.  You can explictly _setCredentials()_ while initializing a service but that is not recommended as the code is not portable
 
@@ -242,6 +243,79 @@ URL signedUrl = storage_service.signUrl(BlobInfo.newBuilder("your_project", "a.t
 System.out.println(signedUrl);
 
 ```
+
+#### Credential Providers
+
+```
+import com.google.api.gax.grpc.InstantiatingChannelProvider;
+import com.google.api.gax.core.GoogleCredentialsProvider;
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.auth.Credentials;
+
+	String cert_file = "GCPNETAppID-e65deccae47b.json";
+    //export GOOGLE_APPLICATION_CREDENTIALS="/path/to/keyfile.json" 
+
+    String cred_env = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
+    System.out.println(cred_env);
+    List<String> ll = Arrays.asList("https://www.googleapis.com/auth/cloud-platform");
+
+    //GoogleCredentialsProvider myprovider = GoogleCredentialsProvider.newBuilder().setScopesToApply(ll).build();
+    ServiceAccountCredentials creds = ServiceAccountCredentials.fromStream(new FileInputStream(cert_file));
+    
+    FixedCredentialsProvider myprovider = FixedCredentialsProvider.create(creds);
+    System.out.println(myprovider.getCredentials() );
+
+     InstantiatingChannelProvider channelProvider = TopicAdminSettings.defaultChannelProviderBuilder()
+        .setCredentialsProvider(myprovider)
+        .build();
+```
+
+##### Async Futures
+
+```java
+api.client.http.HttpTransport;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
+import com.google.cloud.pubsub.spi.v1.Publisher;
+import com.google.cloud.pubsub.spi.v1.TopicAdminClient;
+import com.google.cloud.pubsub.spi.v1.TopicAdminSettings;
+import com.google.protobuf.ByteString;
+import com.google.pubsub.v1.PubsubMessage;
+import com.google.pubsub.v1.Topic;
+import com.google.pubsub.v1.TopicName;
+
+import com.google.api.gax.grpc.InstantiatingChannelProvider;
+import com.google.api.gax.core.GoogleCredentialsProvider;
+import com.google.iam.v1.GetIamPolicyRequest;
+import com.google.iam.v1.Policy;
+import com.google.iam.v1.SetIamPolicyRequest;
+import com.google.iam.v1.Binding;
+import com.google.cloud.Role;
+
+
+    List<String> ll = Arrays.asList("https://www.googleapis.com/auth/cloud-platform");
+    GoogleCredentialsProvider myprovider = GoogleCredentialsProvider.newBuilder().setScopesToApply(ll).build();
+    System.out.println(myprovider.getCredentials());
+
+     InstantiatingChannelProvider channelProvider = TopicAdminSettings.defaultChannelProviderBuilder()
+        .setCredentialsProvider(myprovider)
+        .build();    
+        
+     TopicAdminSettings topicAdminSettings =  TopicAdminSettings.defaultBuilder().setChannelProvider(channelProvider).build();
+     TopicAdminClient topicAdminClient =  TopicAdminClient.create(topicAdminSettings);
+      String formattedResource = TopicName.create("mineral-minutia-820", "saltopic2").toString();
+      
+      GetIamPolicyRequest request = GetIamPolicyRequest.newBuilder()
+        .setResource(formattedResource)
+        .build();
+      ApiFuture<Policy> future = topicAdminClient.getIamPolicyCallable().futureCall(request);
+      Policy response = future.get();
+      System.out.println(response);
+
+```
+
+
 
 #### Cloud Go
 
@@ -602,7 +676,11 @@ lh.addHandler(consoleHandler);
             
 Logger lc = Logger.getLogger("httpclient.wire.content");
 lc.setLevel(Level.ALL);
-lc.addHandler(consoleHandler);  
+lc.addHandler(consoleHandler);
+
+Logger gl = Logger.getLogger("io.grpc");
+gl.setLevel(Level.FINE);
+gl.addHandler(consoleHandler);
 ```
 
 ##### Setting API Key 
@@ -661,6 +739,18 @@ Oauth2 service = new Oauth2.Builder(httpTransport, jsonFactory, new HttpRequestI
             })                  
             .setApplicationName("oauth client")
             .build();
+```
+
+or using Cloud Libraries
+
+```java
+import com.google.api.gax.retrying.RetrySettings;
+
+        Storage storage = StorageOptions.newBuilder()
+            .setCredentials(myprovider.getCredentials())
+            .setRetrySettings(ServiceOptions.getDefaultRetrySettings())
+            .build()
+            .getService();
 ```
 
 ***  
