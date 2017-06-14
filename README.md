@@ -246,7 +246,7 @@ System.out.println(signedUrl);
 
 #### Credential Providers
 
-```
+```java
 import com.google.api.gax.grpc.InstantiatingChannelProvider;
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
@@ -274,7 +274,7 @@ import com.google.auth.Credentials;
 ##### Async Futures
 
 ```java
-api.client.http.HttpTransport;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.cloud.pubsub.spi.v1.Publisher;
