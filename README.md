@@ -41,7 +41,8 @@ The following examples use the Oauth2 *service* to demonstrate the initialized c
     - [Java](#cloud-java)
     - [Go](#cloud-go)
     - [Node](#cloud-node)
-    - [c#](#cloud-c)            
+    - [c#](#cloud-c)
+    - [gRPC Environment Variables](#grpc-environment-variables)    
 * API Client Library
     - [Python](#google-api-python)
     - [Java](#google-api-java)
@@ -244,6 +245,12 @@ System.out.println(signedUrl);
 
 ```
 
+##### Proxy Server Settings
+
+- [https://github.com/grpc/grpc-java/releases/tag/v1.0.3](https://github.com/grpc/grpc-java/releases/tag/v1.0.3)
+```  
+export  GRPC_PROXY_EXP=proxy_server:3128
+```
 #### Credential Providers
 
 ```java
@@ -420,6 +427,13 @@ namespace CloudStorageAppGcloud
 }
 
 ```
+
+#### gRPC Environment Variables
+
+- [https://github.com/grpc/grpc/blob/master/doc/environment_variables.md](https://github.com/grpc/grpc/blob/master/doc/environment_variables.md)
+  
+
+
 
 #### Google API Client Library for Python
 
@@ -1029,6 +1043,9 @@ or c:\Users\%USER%\AppData\Roaming\Google.Apis.Auth
 ```
 
 #### Using API through Proxy
+
+gRPC clients support http_proxy parameter:
+- [https://github.com/grpc/grpc/blob/master/doc/environment_variables.md](https://github.com/grpc/grpc/blob/master/doc/environment_variables.md)
 
 
 * The following is curated from:
