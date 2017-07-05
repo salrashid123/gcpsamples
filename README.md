@@ -368,6 +368,17 @@ import (
 	}
 
 ```
+##### Exponential Backoff
+
+Cloud libraries implement backoff automatically per service.
+
+- GCS
+  - [https://github.com/GoogleCloudPlatform/google-cloud-go/blob/master/storage/invoke.go#L26](https://github.com/GoogleCloudPlatform/google-cloud-go/blob/master/storage/invoke.go#L26)
+
+- BQ
+  - [https://github.com/GoogleCloudPlatform/google-cloud-go/blob/master/bigquery/service.go#L705](https://github.com/GoogleCloudPlatform/google-cloud-go/blob/master/bigquery/service.go#L705)
+  - [https://github.com/GoogleCloudPlatform/google-cloud-go/blob/master/bigquery/service.go#L529](https://github.com/GoogleCloudPlatform/google-cloud-go/blob/master/bigquery/service.go#L529)
+
 
 #### Cloud Node
 
