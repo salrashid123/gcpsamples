@@ -191,6 +191,34 @@ for page in iterator.pages:
   for entry in page:
       print(entry.timestamp)
 ```
+
+##### Using google.auth for GoogleAPIs
+
+
+The following shows transport authorization for the original Google APIs
+
+```python
+import oauth2client
+from oauth2client.client import GoogleCredentials
+credentials = GoogleCredentials.get_application_default()
+if credentials.create_scoped_required():
+  credentials = credentials.create_scoped(scopes)
+http = credentials.authorize(http)
+```
+
+If you need to use the more recent Google Cloud Auth library, you need to cast the transport:
+
+-  [http://google-auth.readthedocs.io/en/latest/reference/google.auth.html](http://google-auth.readthedocs.io/en/latest/reference/google.auth.html)
+-  [ https://github.com/GoogleCloudPlatform/google-auth-library-python-httplib2]( https://github.com/GoogleCloudPlatform/google-auth-library-python-httplib2)
+
+
+```python
+import google.auth
+import google_auth_httplib2
+credentials, project = google.auth.default(scopes=scopes)
+http =  google_auth_httplib2.AuthorizedHttp(credentials)
+```
+
 #### Cloud Java
 
 * [http://googlecloudplatform.github.io/google-cloud-java/0.8.0/index.html](http://googlecloudplatform.github.io/google-cloud-java/0.8.0/index.html)
