@@ -1143,3 +1143,90 @@ public class ProxySupportedHttpClientFactory : HttpClientFactory
 }
 
 ```
+
+
+java
+
+to use:
+
+```
+docker run  -p 3128:3128 -ti docker.io/salrashid123/squidproxy /bin/bash
+
+then when inside the container:
+/apps/squid/sbin/squid -NsY -f /apps/squid.conf.basicauth
+```
+
+
+
+```java
+import org.apache.http.HttpException;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequestInterceptor;
+
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.HttpContext;
+
+import com.google.api.client.http.apache.ApacheHttpTransport;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.conn.params.ConnRoutePNames;
+import org.apache.http.auth.AuthScope;
+
+import org.apache.http.message.BasicHeader;
+import java.net.Proxy;
+
+
+            JacksonFactory jsonFactory = new JacksonFactory(); 
+
+            /*
+            System.setProperty("https.proxyHost", "localhost");
+            System.setProperty("https.proxyPort", "3128");              
+            Authenticator.setDefault(
+                new Authenticator() {
+                   @Override
+                   public PasswordAuthentication getPasswordAuthentication() {
+                      return new PasswordAuthentication(
+                            "user1", "user1".toCharArray());
+                   }
+                }
+             );              
+            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 3128));
+            NetHttpTransport mHttpTransport = new NetHttpTransport.Builder().setProxy(proxy).build();
+            */
+
+            HttpHost proxy = new HttpHost("127.0.0.1",3128);
+            DefaultHttpClient httpClient = new DefaultHttpClient();
+            httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);            
+            httpClient.addRequestInterceptor(new HttpRequestInterceptor(){            
+                @Override
+                public void process(org.apache.http.HttpRequest request, HttpContext context) throws HttpException, IOException {
+                    if (request.getRequestLine().getMethod().equals("CONNECT"))                 
+                      request.addHeader(new BasicHeader("Proxy-Authorization","Basic dXNlcjE6dXNlcjE="));
+                }
+            });
+                                    
+            ApacheHttpTransport mHttpTransport =  new ApacheHttpTransport(httpClient);        
+            GoogleCredential credential = GoogleCredential.getApplicationDefault(mHttpTransport,jsonFactory);
+            if (credential.createScopedRequired())
+                credential = credential.createScoped(Arrays.asList(BigqueryScopes.DEVSTORAGE_READ_ONLY));
+
+            Bigquery service = new Bigquery.Builder(mHttpTransport, jsonFactory, credential)
+                .setApplicationName("oauth client")   
+                .build(); 
+                
+            DatasetList dl = service.datasets().list("mineral-minutia-820").execute();
+            System.out.println(dl.getDatasets().size());
+                
+        } 
+        catch (Exception ex) {
+            System.out.println("Error:  " + ex);
+        }
+
+
+```
