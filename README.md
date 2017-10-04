@@ -1091,61 +1091,7 @@ gRPC clients support http_proxy parameter:
 [https://kzhendev.wordpress.com/2015/04/28/accessing-google-apis-through-a-proxy-with-net/](https://kzhendev.wordpress.com/2015/04/28/accessing-google-apis-through-a-proxy-with-net/)
 
 
-```csharp
-using System.Net;
-using System.Net.Http;
-using System.Security.Cryptography.X509Certificates;
-
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Oauth2.v2;
-using Google.Apis.Services;
-using Google.Apis.Http;
-
-
-            string CREDENTIAL_FILE_PKCS12 = "c:\\your_cert.p12"; 
-            string serviceAccountEmail = "your_svc_account@project.iam.gserviceaccount.com";
-            var certificate = new X509Certificate2(CREDENTIAL_FILE_PKCS12, "notasecret",X509KeyStorageFlags.Exportable);
-            ServiceAccountCredential credential = new ServiceAccountCredential(
-               new ServiceAccountCredential.Initializer(serviceAccountEmail)
-               {
-                   Scopes = new[] { Oauth2Service.Scope.UserinfoEmail },
-                   HttpClientFactory = new ProxySupportedHttpClientFactory()
-               }.FromCertificate(certificate));
-
-
-            var service = new Oauth2Service(new BaseClientService.Initializer()
-            {
-                HttpClientInitializer = credential,
-                ApplicationName = "Oauth2 Sample",
-                HttpClientFactory = new ProxySupportedHttpClientFactory()
-            });
-
-
-
-public class ProxySupportedHttpClientFactory : HttpClientFactory
-{
-    protected override HttpMessageHandler CreateHandler(CreateHttpClientArgs args)
-    {
-
-        ICredentials credentials = new NetworkCredential("user1", "user1");
-
-        var proxy = new WebProxy("http://192.168.1.6:3128", true, null, credentials);
-
-        var webRequestHandler = new WebRequestHandler()
-        {
-            UseProxy = true,
-            Proxy = proxy,
-            UseCookies = false
-        };
-
-        return webRequestHandler;
-    }
-}
-
-```
-
-
-java
+See [proxy](proxy) folder for detailed usage.
 
 to use:
 
@@ -1153,80 +1099,8 @@ to use:
 docker run  -p 3128:3128 -ti docker.io/salrashid123/squidproxy /bin/bash
 
 then when inside the container:
-/apps/squid/sbin/squid -NsY -f /apps/squid.conf.basicauth
+/apps/squid/sbin/squid -NsY -f /apps/squid.conf.transparent &
+
+tail -f /apps/squid/var/logs/access.log
 ```
 
-
-
-```java
-import org.apache.http.HttpException;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpRequestInterceptor;
-
-import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpHeaders;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.HttpContext;
-
-import com.google.api.client.http.apache.ApacheHttpTransport;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.conn.params.ConnRoutePNames;
-import org.apache.http.auth.AuthScope;
-
-import org.apache.http.message.BasicHeader;
-import java.net.Proxy;
-
-
-            JacksonFactory jsonFactory = new JacksonFactory(); 
-
-            /*
-            System.setProperty("https.proxyHost", "localhost");
-            System.setProperty("https.proxyPort", "3128");              
-            Authenticator.setDefault(
-                new Authenticator() {
-                   @Override
-                   public PasswordAuthentication getPasswordAuthentication() {
-                      return new PasswordAuthentication(
-                            "user1", "user1".toCharArray());
-                   }
-                }
-             );              
-            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 3128));
-            NetHttpTransport mHttpTransport = new NetHttpTransport.Builder().setProxy(proxy).build();
-            */
-
-            HttpHost proxy = new HttpHost("127.0.0.1",3128);
-            DefaultHttpClient httpClient = new DefaultHttpClient();
-            httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);            
-            httpClient.addRequestInterceptor(new HttpRequestInterceptor(){            
-                @Override
-                public void process(org.apache.http.HttpRequest request, HttpContext context) throws HttpException, IOException {
-                    if (request.getRequestLine().getMethod().equals("CONNECT"))                 
-                      request.addHeader(new BasicHeader("Proxy-Authorization","Basic dXNlcjE6dXNlcjE="));
-                }
-            });
-                                    
-            ApacheHttpTransport mHttpTransport =  new ApacheHttpTransport(httpClient);        
-            GoogleCredential credential = GoogleCredential.getApplicationDefault(mHttpTransport,jsonFactory);
-            if (credential.createScopedRequired())
-                credential = credential.createScoped(Arrays.asList(BigqueryScopes.DEVSTORAGE_READ_ONLY));
-
-            Bigquery service = new Bigquery.Builder(mHttpTransport, jsonFactory, credential)
-                .setApplicationName("oauth client")   
-                .build(); 
-                
-            DatasetList dl = service.datasets().list("mineral-minutia-820").execute();
-            System.out.println(dl.getDatasets().size());
-                
-        } 
-        catch (Exception ex) {
-            System.out.println("Error:  " + ex);
-        }
-
-
-```
