@@ -2,9 +2,9 @@
 # Accessing Google Cloud APIs though a Proxy
 
 
-Proxy servers are not uncommon and I found some of my customers accessing Google Cloud APIs thorough them via our APIs.
+Proxy servers are not uncommon and I found some of my customers accessing Google Cloud APIs thorough them.
 
-Most of the time, its a simple forward proxy with no authentication and never with SSL interception.
+Most of the time, its a simple forward proxy with no authentication and never with SSL interception (which IMHO, is a really questionable see [link](https://github.com/salrashid123/squid_proxy#https-intercept))
 
 Fortunately, many of our APIs piggyback off of the native language proxy configuration settings (eg. ```http_proxy``` env variable) so that part
 makes it easier.
@@ -22,7 +22,7 @@ One other complicaton to account for is that the authentication step (i.,e getti
 
 # Python
 
-## Cloud Client Library (google-cloud-python)
+## Cloud Client Library    ([google-cloud-python](https://github.com/GoogleCloudPlatform/google-cloud-python))
 
 ### HTTP
 
@@ -78,7 +78,7 @@ For some reason, http\_proxy= variable only passes through the API call via the 
 Which means you need to set both environment variables.
 
 
-# JAVA
+# JAVA [google-cloud-java](https://github.com/GoogleCloudPlatform/google-cloud-python)
 
 For java, you generally would need to set an Authenticator to handle proxy negotiations.  However, with googleapis and with
 google cloud client library, you need to override some values
@@ -90,15 +90,15 @@ google cloud client library, you need to override some values
 For HTTP, the ApacheHttpTransport() provides an override mechanism to set custom headers which you can use later.
 What this allows users to do is to set custom Proxy-Authorization:  or even Basic.
 
-The following shows overrides the transport 
+The following shows overrides the transport
 
 ```java
-JacksonFactory jsonFactory = new JacksonFactory(); 
+JacksonFactory jsonFactory = new JacksonFactory();
 
 HttpHost proxy = new HttpHost("127.0.0.1",3128);
 DefaultHttpClient httpClient = new DefaultHttpClient();
 httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
-            
+
 httpClient.addRequestInterceptor(new HttpRequestInterceptor(){            
     @Override
     public void process(org.apache.http.HttpRequest request, HttpContext context) throws HttpException, IOException {
@@ -109,7 +109,7 @@ httpClient.addRequestInterceptor(new HttpRequestInterceptor(){
 
 mHttpTransport =  new ApacheHttpTransport(httpClient);
 ```
-#### For Proxy-Authentication:  Basic with GoogleAPIs 
+#### For Proxy-Authentication:  Basic with GoogleAPIs
 
 You can then use the transport in even in Traditional GoogleAPIs or with the Cloud libraries.
 
@@ -121,7 +121,7 @@ if (credential.createScopedRequired())
 
 com.google.api.services.storage.Storage service = new com.google.api.services.storage.Storage.Builder(mHttpTransport, jsonFactory, credential)
                 .setApplicationName("oauth client")   
-                .build(); 
+                .build();
 ```
 
 #### For Proxy-Authentication:  Basic with Google Cloud Client Libraries
@@ -161,7 +161,7 @@ both would show the following in the proxy access logs which indicates the authe
 Google-cloud-java with GRPC has experimental proxy support using
 ```GRPC_PROXY_EXP``` environment variable.
 
-so first export the environment variable for the GRPC part: 
+so first export the environment variable for the GRPC part:
 ```
 export GRPC_PROXY_EXP=localhost:31138
 ```
@@ -178,7 +178,7 @@ HttpTransportFactory hf = new HttpTransportFactory(){
 		return mHttpTransport;
 	}
 };            
-		
+
 credential = GoogleCredentials.getApplicationDefault(hf);
 CredentialsProvider credentialsProvider =  new GoogleCredentialsProvider(){
 	public List<String> getScopesToApply(){
@@ -192,11 +192,11 @@ CredentialsProvider credentialsProvider =  new GoogleCredentialsProvider(){
 TopicAdminSettings topicAdminSettings =
      TopicAdminSettings.newBuilder().setCredentialsProvider(credentialsProvider)
 		 .build();
-				 
+
 TopicAdminClient topicAdminClient =
      TopicAdminClient.create(topicAdminSettings);
 ProjectName project = ProjectName.create(projectId);
-for (Topic element : topicAdminClient.listTopics(project).iterateAll()) 
+for (Topic element : topicAdminClient.listTopics(project).iterateAll())
 		System.out.println(element.getName());
 ```
 
@@ -206,7 +206,7 @@ and in the logs, you'll see
 1507073510.386   5758 172.17.0.1 TCP_MISS/200 4438 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/172.217.27.234 -
 ```
 
-# GOLANG
+# golang [google-cloud=-go](https://github.com/GoogleCloudPlatform/google-cloud-go)
 
 GO also uses the standard environment variable to use the proxy:
 
@@ -279,7 +279,7 @@ the access log output would show both pubsub, gcs calls as well as the authentic
 1506982991.265   2005 172.17.0.1 TCP_MISS/200 4675 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/216.58.199.202 -
 ```
 
-# C#
+# C# [google-cloud-dotnet](https://github.com/GoogleCloudPlatform/google-cloud-dotnet)
 
 C# also uses the environment variables though for some services, enabling it requires some code changes:
 
@@ -291,7 +291,7 @@ export http_proxy=http://127.0.0.1:3128
 then
 
 ```csharp
-            string CREDENTIAL_FILE_PKCS12 = "/path/to/your/service0-account.p12"; 
+            string CREDENTIAL_FILE_PKCS12 = "/path/to/your/service0-account.p12";
             string serviceAccountEmail = "yourservice_account@project.gserviceaccount.com";
             var certificate = new X509Certificate2(CREDENTIAL_FILE_PKCS12, "notasecret",X509KeyStorageFlags.Exportable);
 
@@ -318,7 +318,7 @@ then
             Channel channel = new Channel(PublisherClient.DefaultEndpoint.ToString(), channelCredentials);
             PublisherSettings ps = new PublisherSettings();        
             PublisherClient publisher = PublisherClient.Create(channel,ps);
-        
+
             foreach  (Topic t in publisher.ListTopics(new ProjectName(projectID)))
               Console.WriteLine(t.Name);
         }
