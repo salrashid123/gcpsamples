@@ -352,6 +352,55 @@ Finally, the squid proxy logs will show:
 1506991395.049   2294 172.17.0.1 TCP_MISS/200 4100 CONNECT www.googleapis.com:443 - HIER_DIRECT/172.217.27.234 -
 ```
 
+# NodeJS [google-cloud-node](https://github.com/GoogleCloudPlatform/google-cloud-node)
+
+NodeJS also uses the environment variable directly for _both_ authentication and the RPC call spanning HTTP and GRPC
+
+so simply setting
+```
+export http_proxy=http://localhost:3128
+```
+
+and then running the sample
+
+```javascript
+var log4js = require("log4js");
+var logger = log4js.getLogger();
+
+const Pubsub = require('@google-cloud/pubsub');
+var gcloud = require('google-cloud');
+
+var gcs = gcloud.storage();
+gcs.getBuckets(function(err, buckets) {
+  if (!err) {
+  	buckets.forEach(function(value){
+      logger.info(value.id);
+	});
+  }
+});
+
+const pubsub = Pubsub({
+  projectId: 'your_project'
+});
+pubsub.getTopics((err, topic) => {
+	if (err) {
+		logger.error(err);
+		return;
+	}
+	topic.forEach(function(entry) {
+    logger.info(entry.name);
+	});
+});
+```
+
+gives
+
+```
+1507120284.378    335 172.17.0.1 TCP_MISS/200 5632 CONNECT accounts.google.com:443 - HIER_DIRECT/216.58.203.77 -
+1507120284.468    283 172.17.0.1 TCP_MISS/200 5632 CONNECT accounts.google.com:443 - HIER_DIRECT/216.58.203.77 -
+1507120285.369    987 172.17.0.1 TCP_MISS/200 11167 CONNECT www.googleapis.com:443 - HIER_DIRECT/172.217.31.74 -
+1507120286.030   2001 172.17.0.1 TCP_MISS/200 5125 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/172.217.31.42 -
+```
 
 # Squid Proxy Dockerfile
 

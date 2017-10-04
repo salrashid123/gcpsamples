@@ -1,0 +1,12 @@
+{
+  "name": "myapp",
+  "version": "0.0.0",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "debug": "~2.2.0",
+    "log4js": "^0.6.27",
+    "google-cloud": ""
+  }
+}
