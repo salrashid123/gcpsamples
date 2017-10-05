@@ -4,7 +4,7 @@
 
 Proxy servers are not uncommon and I found some of my customers accessing Google Cloud APIs thorough them.
 
-Most of the time, its a simple forward proxy with no authentication and never with SSL interception (which IMHO, is a really questionable see [link](https://github.com/salrashid123/squid_proxy#https-intercept))
+Most of the time, its a simple forward proxy with no authentication and never with SSL interception (which IMHO, is a really questionable, see [link](https://github.com/salrashid123/squid_proxy#https-intercept))
 
 Fortunately, many of our APIs piggyback off of the native language proxy configuration settings (eg. ```http_proxy``` env variable) so that part
 makes it easier.
@@ -56,7 +56,7 @@ export http_proxy=http://localhost:3128
 export https_proxy=http://localhost:3128
 ```
 
-Once set, the following sample will show CONNECT requests in squid access logs:
+Then with the sample API call for pubsub:
 
 ```python
 from google.cloud import pubsub
@@ -75,19 +75,19 @@ Once the environment variables are set, you will see the authentication and PubS
 
 >> Note:
 For some reason, http\_proxy= variable only passes through the API call via the proxy while https\_proxy covers the authentication call.
-Which means you need to set both environment variables.
+Which means you need to set both environment variables (this maybe a bug)
 
 
 # JAVA [google-cloud-java](https://github.com/GoogleCloudPlatform/google-cloud-python)
 
-For java, you generally would need to set an Authenticator to handle proxy negotiations.  However, with googleapis and with
+For java, you generally would need to set an [Authenticator](https://docs.oracle.com/javase/7/docs/api/java/net/Authenticator.html) to handle proxy negotiations.  However, with googleapis and with
 google cloud client library, you need to override some values
 
 - [https://github.com/GoogleCloudPlatform/google-cloud-java#using-a-proxy](https://github.com/GoogleCloudPlatform/google-cloud-java#using-a-proxy)
 
 ## HTTP
 
-For HTTP, the ApacheHttpTransport() provides an override mechanism to set custom headers which you can use later.
+For HTTP, the [ApacheHttpTransport()](https://developers.google.com/api-client-library/java/google-http-java-client/reference/1.20.0/com/google/api/client/http/apache/ApacheHttpTransport) provides an override mechanism to set custom headers which you can use later.
 What this allows users to do is to set custom Proxy-Authorization:  or even Basic.
 
 The following shows overrides the transport
@@ -102,8 +102,8 @@ httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
 httpClient.addRequestInterceptor(new HttpRequestInterceptor(){            
     @Override
     public void process(org.apache.http.HttpRequest request, HttpContext context) throws HttpException, IOException {
-            if (request.getRequestLine().getMethod().equals("CONNECT"))                 
-               request.addHeader(new BasicHeader("Proxy-Authorization","Basic dXNlcjE6dXNlcjE="));
+        //    if (request.getRequestLine().getMethod().equals("CONNECT"))                 
+        //       request.addHeader(new BasicHeader("Proxy-Authorization","Basic dXNlcjE6dXNlcjE="));
         }
     });
 
@@ -206,7 +206,7 @@ and in the logs, you'll see
 1507073510.386   5758 172.17.0.1 TCP_MISS/200 4438 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/172.217.27.234 -
 ```
 
-# golang [google-cloud=-go](https://github.com/GoogleCloudPlatform/google-cloud-go)
+# golang [google-cloud-go](https://github.com/GoogleCloudPlatform/google-cloud-go)
 
 GO also uses the standard environment variable to use the proxy:
 
