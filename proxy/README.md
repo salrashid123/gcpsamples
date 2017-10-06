@@ -17,7 +17,7 @@ For background, please see the two types of libraries available to access Google
 
 The recommended library set to use is the idiomatic "Cloud Client Library" which itself comes in two different transport mechanisms:  HTTP and gRPC.  At the time of writing (10/17), some APIs support both transports, some HTTP only (GCS, BigQiery), while other gRPC (PubSub).  How users enable and configure proxy support is slightly different for these transports.
 
-One other complicaton to account for is that the authentication step (i.,e getting a GoogleCredential()) uses HTTP even if the underlying RPC is using gRPC.  For example, with java, you have to account for the credential via HTTP and the rpc call via gRPC.
+One other complication to account for is that the authentication step (i.,e getting a GoogleCredential()) uses HTTP even if the underlying RPC is using gRPC.  For example, with java, you have to account for the credential via HTTP and the rpc call via gRPC.
 
 
 # Python
@@ -80,14 +80,48 @@ Which means you need to set both environment variables (this maybe a bug)
 
 # JAVA [google-cloud-java](https://github.com/GoogleCloudPlatform/google-cloud-python)
 
-For java, you generally would need to set an [Authenticator](https://docs.oracle.com/javase/7/docs/api/java/net/Authenticator.html) to handle proxy negotiations.  However, with googleapis and with
-google cloud client library, you need to override some values
+For java, you can set the well known environment variables as described here:
 
-- [https://github.com/GoogleCloudPlatform/google-cloud-java#using-a-proxy](https://github.com/GoogleCloudPlatform/google-cloud-java#using-a-proxy)
+[https://github.com/GoogleCloudPlatform/google-cloud-java#using-a-proxy](https://github.com/GoogleCloudPlatform/google-cloud-java#using-a-proxy)
+
+
 
 ## HTTP
 
-For HTTP, the [ApacheHttpTransport()](https://developers.google.com/api-client-library/java/google-http-java-client/reference/1.20.0/com/google/api/client/http/apache/ApacheHttpTransport) provides an override mechanism to set custom headers which you can use later.
+For HTTP-only requests, there are several options depending on your needs,
+
+### Default proxy
+
+The following env variables will force all calls over HTTP
+
+```java
+System.setProperty("https.proxyHost", "localhost");
+System.setProperty("https.proxyPort", "3128");
+```
+
+### Default proxy with Basic Authenticator
+
+If your proxy requires BASIC auth, you may want to use an
+[Authenticator](https://docs.oracle.com/javase/7/docs/api/java/net/Authenticator.html) to handle proxy negotiations.
+
+```java
+System.setProperty("https.proxyHost", "localhost");
+System.setProperty("https.proxyPort", "3128");
+
+Authenticator.setDefault(
+    new Authenticator() {
+    @Override
+    public PasswordAuthentication getPasswordAuthentication() {
+        return new PasswordAuthentication(
+                "user1", "user1".toCharArray());
+    }
+    }
+);
+
+### ApacheHttpTransport
+
+```
+ [ApacheHttpTransport()](https://developers.google.com/api-client-library/java/google-http-java-client/reference/1.20.0/com/google/api/client/http/apache/ApacheHttpTransport) provides an override mechanism to set custom headers which you can use later.
 What this allows users to do is to set custom Proxy-Authorization:  or even Basic.
 
 The following shows overrides the transport
