@@ -92,7 +92,7 @@ For HTTP-only requests, there are several options depending on your needs,
 
 ### Default proxy
 
-The following env variables will force all calls over HTTP
+The following env variables will force all calls via the proxy
 
 ```java
 System.setProperty("https.proxyHost", "localhost");
@@ -117,12 +117,12 @@ Authenticator.setDefault(
     }
     }
 );
+```
 
 ### ApacheHttpTransport
 
-```
  [ApacheHttpTransport()](https://developers.google.com/api-client-library/java/google-http-java-client/reference/1.20.0/com/google/api/client/http/apache/ApacheHttpTransport) provides an override mechanism to set custom headers which you can use later.
-What this allows users to do is to set custom Proxy-Authorization:  or even Basic.
+What this allows users to do is to set custom Proxy-Authorization:  or even Basic as shown below
 
 The following shows overrides the transport
 
@@ -136,18 +136,20 @@ httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
 httpClient.addRequestInterceptor(new HttpRequestInterceptor(){            
     @Override
     public void process(org.apache.http.HttpRequest request, HttpContext context) throws HttpException, IOException {
-        //    if (request.getRequestLine().getMethod().equals("CONNECT"))                 
-        //       request.addHeader(new BasicHeader("Proxy-Authorization","Basic dXNlcjE6dXNlcjE="));
+            if (request.getRequestLine().getMethod().equals("CONNECT"))                 
+               request.addHeader(new BasicHeader("Proxy-Authorization","Basic dXNlcjE6dXNlcjE="));
         }
     });
 
 mHttpTransport =  new ApacheHttpTransport(httpClient);
 ```
+
 #### For Proxy-Authentication:  Basic with GoogleAPIs
 
 You can then use the transport in even in Traditional GoogleAPIs or with the Cloud libraries.
 
-With GoogleAPIS
+With GoogleAPIs, you can simply set the ```https.proxyHost`` env variable set or use the full override as shown below:
+
 ```java
 com.google.api.client.googleapis.auth.oauth2.GoogleCredential credential = com.google.api.client.googleapis.auth.oauth2.GoogleCredential.getApplicationDefault(mHttpTransport,jsonFactory);
 if (credential.createScopedRequired())
@@ -160,7 +162,8 @@ com.google.api.services.storage.Storage service = new com.google.api.services.st
 
 #### For Proxy-Authentication:  Basic with Google Cloud Client Libraries
 
-For Google Client Libraries:
+For Google Client Libraries that use HTTP, the you can also use the env variables or the full transport override:
+
 ```java
 
 HttpTransportFactory hf = new HttpTransportFactory(){
@@ -200,7 +203,7 @@ so first export the environment variable for the GRPC part:
 export GRPC_PROXY_EXP=localhost:31138
 ```
 
-then use a GoogleCredential that is also configured to use the proxy.
+then set the ```https.proxyHost=, https.proxyPort=``` env variables or use a GoogleCredential that is  configured to use the proxy.
 
 In the end, your Credentials are acquired by HTTP while PubSub uses GRPC
 
