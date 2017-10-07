@@ -473,3 +473,69 @@ to view the accesslogs in the container:
 ```
 tail -f /apps/squid/var/logs/access.log
 ```
+
+for SSL interception, run:
+
+> Note this is only for amusement!
+
+setup virtualenv:
+
+```
+virtualenv env
+source env/bin/activate
+pip install google-cloud-storage
+```
+
+edit the two files and disable SSL checks ```verify=False``` (you can also set the CA bundle env variable..)
+
+- env/local/lib/python2.7/site-packages/google/oauth2/_client.py
+(around line 103):
+```python
+def _token_endpoint_request(request, token_uri, body):
+...
+    response = request(
+        method='POST', url=token_uri, headers=headers, body=body, verify=False)
+```
+
+- env/local/lib/python2.7/site-packages/google/auth/transport/requests.py
+(around line 179):
+```python
+    def request(self, method, url, data=None, headers=None, **kwargs):
+    ...
+        response = super(AuthorizedSession, self).request(
+            method, url, data=data, verify=False, headers=request_headers, **kwargs)
+    ...    
+```
+
+Create main.py:
+
+```python
+#!/usr/bin/python
+
+project='your_project'
+from google.cloud import storage
+client = storage.Client(project=project)
+for b in client.list_buckets():
+   print(b.name)
+```
+
+then export the proxy env var
+```
+export https_proxy=localhost:3128
+```
+
+start the proxy server dockerfile with HTTPS intercept:
+```
+/apps/squid/sbin/squid -NsY -f /apps/squid.conf.https_proxy &
+
+```
+
+the access logs now shows actual path requested (within the SSL session!)
+
+```
+1507365724.949    330 172.17.0.1 TAG_NONE/200 0 CONNECT accounts.google.com:443 - HIER_DIRECT/216.58.197.173 -
+1507365725.159    175 172.17.0.1 TAG_NONE/200 0 CONNECT accounts.google.com:443 - HIER_DIRECT/216.58.197.173 -
+1507365725.371    207 172.17.0.1 TCP_MISS/200 1455 POST https://accounts.google.com/o/oauth2/token - HIER_DIRECT/216.58.197.173 application/json
+1507365725.719    344 172.17.0.1 TAG_NONE/200 0 CONNECT www.googleapis.com:443 - HIER_DIRECT/172.217.26.42 -
+1507365726.443    721 172.17.0.1 TCP_MISS/200 7467 GET https://www.googleapis.com/storage/v1/b? - HIER_DIRECT/172.217.26.42 application/json
+```
