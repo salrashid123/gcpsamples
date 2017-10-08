@@ -452,13 +452,14 @@ docker run  -p 3128:3128 -ti docker.io/salrashid123/squidproxy /bin/bash
 ```
 
 
-then for a basic proxy, run from within the shell:
+### Forward proxy
+ for a basic proxy, run from within the shell:
 
 ```
 /apps/squid/sbin/squid -NsY -f /apps/squid.conf.transparent &
 ```
 
-for basicAuth, run:
+### Basic Auth  
 
 ```
 /apps/squid/sbin/squid -NsY -f /apps/squid.conf.basicauth &
@@ -474,14 +475,14 @@ to view the accesslogs in the container:
 tail -f /apps/squid/var/logs/access.log
 ```
 
-for SSL interception, run:
+### SSL interception
 
 > Note this is only for amusement!
 
 setup virtualenv:
 
 ```
-virtualenv env
+virtualenv env --no-site-packages
 source env/bin/activate
 pip install google-cloud-storage
 ```
@@ -527,7 +528,6 @@ export https_proxy=localhost:3128
 start the proxy server dockerfile with HTTPS intercept:
 ```
 /apps/squid/sbin/squid -NsY -f /apps/squid.conf.https_proxy &
-
 ```
 
 the access logs now shows actual path requested (within the SSL session!)
