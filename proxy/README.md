@@ -74,8 +74,8 @@ Once the environment variables are set, you will see the authentication and PubS
 ```
 
 >> Note:
-For some reason, http\_proxy= variable only passes through the API call via the proxy while https\_proxy covers the authentication call.
-Which means you need to set both environment variables (this maybe a bug)
+http\_proxy= variable only passes through the API call via the proxy while https\_proxy covers the authentication call.
+Which means you need to set both environment variables.
 
 
 # JAVA [google-cloud-java](https://github.com/GoogleCloudPlatform/google-cloud-python)
@@ -479,7 +479,12 @@ tail -f /apps/squid/var/logs/access.log
 
 > Note this is only for amusement!
 
-setup virtualenv:
+start the proxy server dockerfile with HTTPS intercept:
+```
+/apps/squid/sbin/squid -NsY -f /apps/squid.conf.https_proxy &
+```
+
+on your laptop, setup virtualenv:
 
 ```
 virtualenv env --no-site-packages
@@ -524,10 +529,9 @@ then export the proxy env var
 ```
 export https_proxy=localhost:3128
 ```
-
-start the proxy server dockerfile with HTTPS intercept:
+and run the sample from withing the virtualenv
 ```
-/apps/squid/sbin/squid -NsY -f /apps/squid.conf.https_proxy &
+python main.py
 ```
 
 the access logs now shows actual path requested (within the SSL session!)
