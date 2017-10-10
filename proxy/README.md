@@ -492,7 +492,7 @@ source env/bin/activate
 pip install google-cloud-storage
 ```
 
-edit the two files and disable SSL checks ```verify=False``` (you can also set the CA bundle env variable..)
+edit the two files and disable SSL checks ```verify=False``` (you can also set the ```REQUESTS_CA_BUNDLE``` env variable as described [here](http://docs.python-requests.org/en/master/user/advanced/#ssl-cert-verification)..)
 
 - env/local/lib/python2.7/site-packages/google/oauth2/_client.py
 (around line 103):
