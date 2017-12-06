@@ -20,3 +20,15 @@ http = credentials.authorize(httplib2.Http())
 service = build(serviceName='oauth2', version= 'v2',http=http)
 resp = service.userinfo().get().execute()
 print resp['email']
+
+
+# -------------------------------------
+
+#from google_auth_oauthlib.flow import InstalledAppFlow
+#flow = InstalledAppFlow.from_client_secrets_file(
+#    'client_secrets.json',
+#    scopes=['profile', 'email'])
+
+#flow.run_local_server()
+
+#client = photos_v1.PhotoServiceClient(credentials=flow.credentials)
