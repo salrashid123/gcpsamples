@@ -881,7 +881,37 @@ client.Transport = &transport.APIKey{
 }
 ```
 
-##### Validating id_token
+##### ID Token Signed by Google
+
+```golang
+import (
+	"log"
+
+	"golang.org/x/net/context"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	oauthsvc "google.golang.org/api/oauth2/v2"
+
+	"google.golang.org/grpc/credentials/oauth"
+)
+
+func main() {
+
+	src, err := google.DefaultTokenSource(oauth2.NoContext, oauthsvc.UserinfoEmailScope)
+	if err != nil {
+		log.Fatalf("Unable to acquire token source: %v", err)
+	}
+
+	creds := oauth.TokenSource{src}
+	tok, err := creds.Token()
+	if err != nil {
+		log.Fatalf("Unable to acquire token source: %v", err)
+	}
+	if (tok.Extra("id_token") != nil){
+		log.Printf("id_token: " , tok.Extra("id_token").(string))
+	}	
+}
+```
 
 [Validating id_token](https://developers.google.com/identity/protocols/OpenIDConnect?hl=en#validatinganidtoken)
 
