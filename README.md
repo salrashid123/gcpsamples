@@ -24,7 +24,7 @@ The basic differences is the Cloud Client libraries are idomatic, has [gcloud-ba
 
 It is recommended to use Cloud Client Libraries whereever possible. Although this article primarily describes the API Client libraries, the python code section describes uses of Cloud Client libraries with Google Cloud Storage.
 
-For more information, see 
+For more information, see
 
 * [Client Libraries Explained](https://cloud.google.com/apis/docs/client-libraries-explained).
 * [Google Cloud Platform Authenticatio Guide](https://cloud.google.com/docs/authentication)
@@ -53,7 +53,8 @@ The following examples use the Oauth2 *service* to demonstrate the initialized c
     - access_token
     - id_token
     - JWT
-
+* [Accessing Google APIs through proxies](proxy/)
+* [Issue and Verify id_tokens](id_token/)
 
 For more inforamtion, see:
 * [oauth2 protocol](https://developers.google.com/identity/protocols/OAuth2)
@@ -90,7 +91,7 @@ The following uses the google-storage client described here: [Storage Client](ht
 
 
 ```
-virtualenv env 
+virtualenv env
 source env/bin/activate
 pip install google-cloud
 
@@ -219,6 +220,26 @@ credentials, project = google.auth.default(scopes=scopes)
 http =  google_auth_httplib2.AuthorizedHttp(credentials)
 ```
 
+```python
+
+# Using Google Cloud APIs
+from google.cloud import storage
+import google.auth
+from google.oauth2 import service_account
+
+#credentials = service_account.Credentials.from_service_account_file('YOUR_JSON_CERT.json')
+#if credentials.requires_scopes:
+#  credentials = credentials.with_scopes(['https://www.googleapis.com/auth/devstorage.read_write'])
+#client = storage.Client(credentials=credentials)
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "YOUR_JSON_CERT.json"
+credentials, project = google.auth.default()    
+client = storage.Client(credentials=credentials)
+buckets = client.list_buckets()
+for bkt in buckets:
+  print bkt
+```
+
 #### Cloud Java
 
 * [http://googlecloudplatform.github.io/google-cloud-java/0.8.0/index.html](http://googlecloudplatform.github.io/google-cloud-java/0.8.0/index.html)
@@ -261,7 +282,7 @@ Storage storage_service = StorageOptions.newBuilder()
 */
 
 Storage  storage_service = StorageOptions.defaultInstance().service();
-        
+
 Iterator<Bucket> bucketIterator = storage_service.list().iterateAll();
 while (bucketIterator.hasNext()) {
   System.out.println(bucketIterator.next());
@@ -289,7 +310,7 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.auth.Credentials;
 
 	String cert_file = "GCPNETAppID-e65deccae47b.json";
-    //export GOOGLE_APPLICATION_CREDENTIALS="/path/to/keyfile.json" 
+    //export GOOGLE_APPLICATION_CREDENTIALS="/path/to/keyfile.json"
 
     String cred_env = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
     System.out.println(cred_env);
@@ -297,7 +318,7 @@ import com.google.auth.Credentials;
 
     //GoogleCredentialsProvider myprovider = GoogleCredentialsProvider.newBuilder().setScopesToApply(ll).build();
     ServiceAccountCredentials creds = ServiceAccountCredentials.fromStream(new FileInputStream(cert_file));
-    
+
     FixedCredentialsProvider myprovider = FixedCredentialsProvider.create(creds);
     System.out.println(myprovider.getCredentials() );
 
@@ -336,11 +357,11 @@ import com.google.cloud.Role;
      InstantiatingChannelProvider channelProvider = TopicAdminSettings.defaultChannelProviderBuilder()
         .setCredentialsProvider(myprovider)
         .build();    
-        
+
      TopicAdminSettings topicAdminSettings =  TopicAdminSettings.defaultBuilder().setChannelProvider(channelProvider).build();
      TopicAdminClient topicAdminClient =  TopicAdminClient.create(topicAdminSettings);
       String formattedResource = TopicName.create("mineral-minutia-820", "saltopic2").toString();
-      
+
       GetIamPolicyRequest request = GetIamPolicyRequest.newBuilder()
         .setResource(formattedResource)
         .build();
@@ -455,7 +476,7 @@ namespace CloudStorageAppGcloud
         static void Main(string[] args)
         {
             var client = StorageClient.Create();
-            
+
             foreach (var obj in client.ListObjects("your_project", ""))
             {
                 Console.WriteLine(obj.Name);
@@ -470,7 +491,7 @@ namespace CloudStorageAppGcloud
 #### gRPC Environment Variables
 
 - [https://github.com/grpc/grpc/blob/master/doc/environment_variables.md](https://github.com/grpc/grpc/blob/master/doc/environment_variables.md)
-  
+
 
 
 
@@ -480,7 +501,7 @@ The following describes the older, non-idomatic libraries.  As you can see, its 
 * [GCS JSON API](https://cloud.google.com/storage/docs/json_api/v1/buckets/list)
 
 ```
-virtualenv env 
+virtualenv env
 source env/bin/activate
 pip install --upgrade requests google-api-python-client httplib2 oauth2client
 
@@ -558,14 +579,14 @@ For more deails, goto [flow_from_clientsecrets](https://developers.google.com/ap
 
 #### Misc
 
-##### Setting API Key 
+##### Setting API Key
 
 Example showing how to set the [API_KEY](https://developers.google.com/api-client-library/python/guide/aaa_apikeys).
 ```python
 service = build(serviceName='oauth2', version= 'v2',http=http, developerKey='YOUR_API_KEY')
 ```
 
-##### Logging 
+##### Logging
 
 Enable verbose wire tracing.
 ```python
@@ -581,7 +602,7 @@ ch.setLevel(logging.INFO)
 ch.setFormatter(logFormatter)
 root.addHandler(ch)
 logging.getLogger('oauth2client.client').setLevel(logging.DEBUG)
-logging.getLogger('apiclient.discovery').setLevel(logging.DEBUG) 
+logging.getLogger('apiclient.discovery').setLevel(logging.DEBUG)
 
 httplib2.debuglevel=3
 ```
@@ -670,7 +691,7 @@ mvn appengine:deploy
 ```
 #### ComputeEngine
 
-Under [auth/compute/javaapp](auth/compute/javaapp).  Runs a simple application using both *Application DefaultCredentials* and *ComputeCredential*. 
+Under [auth/compute/javaapp](auth/compute/javaapp).  Runs a simple application using both *Application DefaultCredentials* and *ComputeCredential*.
 
 ```bash
 gradle task
@@ -718,15 +739,15 @@ import java.util.logging.SimpleFormatter;
 ConsoleHandler consoleHandler = new ConsoleHandler();
 consoleHandler.setLevel(Level.ALL);
 consoleHandler.setFormatter(new SimpleFormatter());
-           
+
 Logger logger = Logger.getLogger("com.google.api.client");
 logger.setLevel(Level.ALL);
 logger.addHandler(consoleHandler);  
-            
+
 Logger lh = Logger.getLogger("httpclient.wire.header");
 lh.setLevel(Level.ALL);
 lh.addHandler(consoleHandler);
-            
+
 Logger lc = Logger.getLogger("httpclient.wire.content");
 lc.setLevel(Level.ALL);
 lc.addHandler(consoleHandler);
@@ -736,7 +757,7 @@ gl.setLevel(Level.FINE);
 gl.addHandler(consoleHandler);
 ```
 
-##### Setting API Key 
+##### Setting API Key
 
 ```java
 String API_KEY = "...";
@@ -876,8 +897,8 @@ go run src/main.go
 ```go
 import "google.golang.org/api/googleapi/transport"
 apiKey :="YOUR_API_KEY"
-client.Transport = &transport.APIKey{ 
-    Key: apiKey, 
+client.Transport = &transport.APIKey{
+    Key: apiKey,
 }
 ```
 
@@ -909,7 +930,7 @@ func main() {
 	}
 	if (tok.Extra("id_token") != nil){
 		log.Printf("id_token: " , tok.Extra("id_token").(string))
-	}	
+	}
 }
 ```
 
@@ -941,7 +962,7 @@ src, err := google.DefaultTokenSource(oauth2.NoContext, oauthsvc.UserinfoEmailSc
 if err != nil {
    log.Fatalf("Unable to acquire token source: %v", err)
 }
-    
+
 tok, err := tokenFromFile("credential.token")
 src = oauth2.ReuseTokenSource(tok,src)
 tokenval, err := src2.Token()
@@ -950,7 +971,7 @@ if err != nil {
 } else {
     log.Printf("token %v\n", tokenval.AccessToken)
 }
-    
+
 client := oauth2.NewClient(context.Background(), src)
 svc, err := oauthsvc.New(client)
 if err != nil {
@@ -994,7 +1015,7 @@ import (
     "golang.org/x/oauth2/google"    
     "log"   
     oauthsvc "google.golang.org/api/oauth2/v2"
-    "google.golang.org/api/googleapi/transport" 
+    "google.golang.org/api/googleapi/transport"
     "net/http"
 )
 const (
@@ -1051,7 +1072,7 @@ npm start
 
 #### Service Account JSON File
 
-Under [auth/service/nodeapp](auth/service/nodeapp).  Runs a simple application using both *Application DefaultCredentials* and directly reading *JSON KEY file*. 
+Under [auth/service/nodeapp](auth/service/nodeapp).  Runs a simple application using both *Application DefaultCredentials* and directly reading *JSON KEY file*.
 
 #### UserFlow
 
@@ -1063,9 +1084,9 @@ Under [auth/userflow/nodeapp](auth/userflow/nodeapp).   Runs a simple webflow ap
 ##### Setting API Key
 
 ```node
-var service = google.oauth2({ 
-      version: 'v2', 
-      auth: authClient, 
+var service = google.oauth2({
+      version: 'v2',
+      auth: authClient,
       params: { key: 'YOUR_API_KEY'}
 });
 ```
@@ -1092,7 +1113,7 @@ means you cannot use Google APIs from within a Container.   There are some [port
 
 #### ComputeEngine
 
-Under [auth/compute/dotnet](auth/compute/dotnet).  Runs a simple application using both *Application DefaultCredentials* and *ComputeCredential*. 
+Under [auth/compute/dotnet](auth/compute/dotnet).  Runs a simple application using both *Application DefaultCredentials* and *ComputeCredential*.
 
 #### Service Account JSON File
 
@@ -1133,4 +1154,3 @@ then when inside the container:
 
 tail -f /apps/squid/var/logs/access.log
 ```
-
