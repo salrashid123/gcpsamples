@@ -50,7 +50,9 @@ const google_certs = 'https://www.googleapis.com/oauth2/v3/certs';
   ```
   npm i
 
-  npm start
+  node user.js   (gets a users gcloud id_token and verifies it)
+  node service.js   (gets a service accounts id_token and verifies it with the service accounts public key)
+  node google-id-token.js   (gets a service accounts id_token and exchanges it for a google-id-token...then verifies it)    
   ```  
 
 - dotnet:  see [Program.cs](dotnet/Program.cs)

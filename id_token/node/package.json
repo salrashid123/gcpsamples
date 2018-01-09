@@ -1,17 +1,16 @@
 {
   "name": "myapp",
   "version": "0.0.0",
-  "scripts": {
-    "start": "node app.js"
-  },
+  "scripts": {},
   "dependencies": {
     "debug": "~2.2.0",
     "google-auth-library": "~0.9.4",
     "googleapis": "2.1.1",
     "google-cloud": "",
     "jws": "*",
-    "request": "*",
+    "axios": "0.17.1",
     "google-auto-auth": "0.9.0 ",
-    "node-jose": "*"
+    "node-jose": "*",
+    "request": "*"
   }
 }
