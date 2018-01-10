@@ -3,8 +3,8 @@
 const fs = require('fs')
 var jws = require('jws');
 const axios = require('axios');
-const request = require('request');
 var jose = require('node-jose');
+var querystring = require('querystring');
 
 // https://github.com/google/google-auth-library-nodejs/blob/next/examples/verifyIdToken.js
 
@@ -25,8 +25,8 @@ const service_account_json = '/home/srashid/gcp_misc/certs/GCPNETAppID-e65deccae
   "target_audience": "https://yourapp.appspot.com/"
 */
 
-fs.readFile(service_account_json, "utf-8",  async (err, data) => { 
-    var parsed_json = JSON.parse(data); 
+fs.readFile(service_account_json, "utf-8",  async (err, data) => {
+    var parsed_json = JSON.parse(data);
 
     const iat = Math.floor(new Date().getTime() / 1000);
     const exp = iat + 3600;  // 3600 seconds = 1 hour
@@ -48,38 +48,33 @@ fs.readFile(service_account_json, "utf-8",  async (err, data) => {
     console.log("*****************  Google Id Token *****************");
     console.log(signature);
     console.log("Exchanging JWT for Google ID Token");
-    
+
     data = {
       'grant_type' : 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      'assertion' : signature 
+      'assertion' : signature
     }
-    
+
     var config = {
       headers : {"Content-type": "application/x-www-form-urlencoded"}
     };
 
     // cant' get axis post working :(
-    //const post_response = await axios.post('https://www.googleapis.com/oauth2/v4/token',  data,  config);
-    //console.log(post_response);
+    const post_response = await axios.post('https://www.googleapis.com/oauth2/v4/token',  querystring.stringify(data),  config);
 
-    var headers = {"Content-type": "application/x-www-form-urlencoded"}
-
-    request.post({url:'https://www.googleapis.com/oauth2/v4/token', form: data, headers: headers, json: true }, async function(err,httpResponse,r){ 
-      if (err) { return console.log(err); }
       console.log('Got GoogleID Token:');
-      console.log(r.id_token);
+      console.log(post_response.data.id_token);
       console.log('Verifying Signature:');
       try {
         const response = await axios.get(google_certs);
         const result = await jose.JWK.asKeyStore(response.data);
-        const dec = jws.decode(r.id_token);
+        const dec = jws.decode(post_response.data.id_token);
         const key_id = dec.header.kid;
-        await jose.JWS.createVerify(result).verify(r.id_token);
+        await jose.JWS.createVerify(result).verify(post_response.data.id_token);
         console.log('>>>>>>>>>> signature verified  <<<<<<<<<<<<<<<<');
       } catch (e) {
         console.log('Unable to Verify JWT');
         console.error(e);
       }
-    });
+  
 
 });
