@@ -75,24 +75,15 @@ the JWT needs to be in the form:
 
 Set the scopes to limit the capabilities of a given token.  A list of scopes can be found [here](https://developers.google.com/identity/protocols/googlescopes).
 
-### Sign the JWT using Service Account A credentials
+### Acquire the JWT using Service Account A credentials
 Now that we have an unsigned JWT claim set, we need to sign it using A's credentials but instruct __.signBlob()__ to sign it for B:
 ```python
 client_id= 'serviceAccountB_ID'
-slist = resource.serviceAccounts().signBlob(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
-                                                  body={'bytesToSign': base64.b64encode(jwt) })
-```
+slist = resource.serviceAccounts().signJwt(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
+                                                 body={'payload': claim })
+resp = slist.execute()
 
-### Reconstruct the JWT with signed data
-Now that we have the signature for the JWT, we need to append the signature to the unsigned part
-```python
-client_id= 'serviceAccountB_ID'
-slist = resource.serviceAccounts().signBlob(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
-                                                  body={'bytesToSign': base64.b64encode(jwt) })
-
-resp = slist.execute()     
-r = self._urlsafe_b64encode(base64.decodestring(resp['signature']))
-signed_jwt = jwt + '.' + r    
+signed_jwt = resp['signedJwt']
 ```
 
 ### Transmit the singed JWT to Google to get an access_token
@@ -101,7 +92,7 @@ url = 'https://accounts.google.com/o/oauth2/token'
 data = {'grant_type' : 'assertion',
         'assertion_type' : 'http://oauth.net/grant_type/jwt/1.0/bearer',
         'assertion' : signed_jwt }
-headers = {"Content-type": "application/x-www-form-urlencoded"}     
+headers = {"Content-type": "application/x-www-form-urlencoded"}
 data = urllib.urlencode(data)
 req = urllib2.Request(url, data, headers)
 resp = urllib2.urlopen(req).read()
@@ -132,12 +123,6 @@ curl https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=ya29.ElnUAws0Mf
 
 ![images/access_token.png](images/access_token.png)
 
-### access_token Revocation
-By default, access_tokens are valid for 1hour from the time they are issued.  You can revoke them prior to that by invoking the oauth2 revocation endpoint:
-```
-curl https://accounts.google.com/o/oauth2/revoke?token={token}
-```
-* [Token Revocation](https://developers.google.com/identity/protocols/OAuth2#serviceaccount)
 
 ## Google issued id_token
 
@@ -170,24 +155,15 @@ The first step is to create an unsigned JWT but have the scope to the service Ac
 ```
 Note the audience is different than for an access_token.
 
-### Sign the JWT using Service Account A credentials
-Now that we have an unsigned JWT claim set, we need to sign it using A's credentials but instruct __.signBlob()__ to sign it for B:
+### Acquire the JWT using Service Account A credentials
+Now that we have an  JWT claim set, we need to get a jwt  using A's credentials but instruct __.signJwt()__ 
 ```python
 client_id= 'serviceAccountB_ID'
-slist = resource.serviceAccounts().signBlob(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
-                                                  body={'bytesToSign': base64.b64encode(jwt) })
-```
-
-### Reconstruct the JWT with signed data
-Now that we have the signature for the JWT, we need to append the signature to the unsigned part
-```python
-slist = resource.serviceAccounts().signBlob(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
-                                            body={'bytesToSign': base64.b64encode(jwt) })
+slist = resource.serviceAccounts().signJwt(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
+                                                  body={'payload': id_token_claim })
 resp = slist.execute()     
-r = self._urlsafe_b64encode(base64.decodestring(resp['signature']))
-signed_jwt = jwt + '.' + r    
+signed_jwt = resp['signedJwt']
 ```
-
 
 ### Transmit the signed JWT to Google to get an id_token
 ```python
@@ -230,7 +206,7 @@ The public certificate used by Google to sign can be found at:
 
 ## Service Account signed JWT
 
-Users can also generate a JWT that is signed by a given Service Account.  The steps here are very simple:  create a JWT and use .signBlob() to sign the header and claims.  The signedJWTs
+Users can also generate a JWT that is signed by a given Service Account.  The steps here are very simple:  create a claim and use .signJWT() to sign.  The signedJWTs
 can be used to verify caller identity as well as see if the recipient is the intended target.  Finally, you can customize the scopes fields to convey capability for the token.
 
 You can specify the intended target for the JWT using the __aud__ field.  In this case, the audience is 'System C'.  The scopes field is arbitrary and user-defined.
@@ -242,12 +218,10 @@ now = int(time.time())
 exptime = now + 3600
 id_token_claim =('{"iss":"%s","scope":"%s", "aud":"%s","exp":%s,"iat":%s}') %(client_id,id_scope,audience,exptime,now)    
 
-jwt = self._urlsafe_b64encode(jwt_header) + '.' + self._urlsafe_b64encode(unicode(id_token_claim, 'utf-8')) 
-slist = resource.serviceAccounts().signBlob(name='projects/mineral-minutia-820/serviceAccounts/'+client_id, 
-                                                  body={'bytesToSign': base64.b64encode(jwt) })
-resp = slist.execute()     
-r = self._urlsafe_b64encode(base64.decodestring(resp['signature']))
-signed_jwt = jwt + '.' + r   
+slist = resource.serviceAccounts().signJwt(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
+                                                  body={'payload': id_token_claim })
+resp = slist.execute()
+signed_jwt = resp['signedJwt']
 ```
 
 ![images/id_token.png](images/id_token2.png)

@@ -28,7 +28,7 @@ class gcs_auth(object):
     ## First initialize IAM for the 'Master Service Account '
 
     scope = 'https://www.googleapis.com/auth/iam https://www.googleapis.com/auth/cloud-platform'
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "GCPNETAppID-e65deccae47b.json"
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "GCPNETAppID-345d845b3936.json"
     credentials = GoogleCredentials.get_application_default()
     if credentials.create_scoped_required():
       credentials = credentials.create_scoped(scope)
@@ -40,10 +40,8 @@ class gcs_auth(object):
     # ----------------------------------------------------  access_token -----------------------------------   
 
     # THen create a JWT for the 'Secondary svc account'
-    jwt_header = '{"alg":"RS256","typ":"JWT"}'
-    jwt_scope = 'https://www.googleapis.com/auth/userinfo.email'
-
-    
+   
+    jwt_scope = 'https://www.googleapis.com/auth/userinfo.email' 
     iss = client_id
     now = int(time.time())
     exptime = now + 3600
@@ -53,17 +51,14 @@ class gcs_auth(object):
             '"exp":%s,'
             '"iat":%s}') %(iss,jwt_scope,exptime,now)    
 
-    jwt = self._urlsafe_b64encode(jwt_header) + '.' + self._urlsafe_b64encode(unicode(claim, 'utf-8'))
 
+    # now that we have a JWT, we use the master svc account to get a jwt
+    slist = resource.serviceAccounts().signJwt(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
+                                                  body={'payload': claim })
 
-    # now that we have a JWT, we use the master svc account to sign
-    slist = resource.serviceAccounts().signBlob(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
-                                                  body={'bytesToSign': base64.b64encode(jwt) })
+    resp = slist.execute()   
 
-    resp = slist.execute()     
-    r = self._urlsafe_b64encode(base64.decodestring(resp['signature']))
-    signed_jwt = jwt + '.' + r    
-
+    signed_jwt = resp['signedJwt']
   
     # finally, send the signed jwt to the google endpoint to acquire the access_token
 
@@ -89,7 +84,7 @@ class gcs_auth(object):
       self.log(e.read(),logging.ERROR)      
       sys.exit(1)
 
-
+ 
    # ----------------------------------------------------  id_token google_signed -----------------------------------   
       
     now = int(time.time())
@@ -100,13 +95,10 @@ class gcs_auth(object):
             '"exp":%s,'
             '"iat":%s}') %(client_id,client_id,exptime,now)    
 
-    jwt = self._urlsafe_b64encode(jwt_header) + '.' + self._urlsafe_b64encode(unicode(id_token_claim, 'utf-8')) 
-    slist = resource.serviceAccounts().signBlob(name='projects/mineral-minutia-820/serviceAccounts/'+client_id, 
-                                                  body={'bytesToSign': base64.b64encode(jwt) })
-
+    slist = resource.serviceAccounts().signJwt(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
+                                                  body={'payload': id_token_claim })
     resp = slist.execute()     
-    r = self._urlsafe_b64encode(base64.decodestring(resp['signature']))
-    signed_jwt = jwt + '.' + r    
+    signed_jwt = resp['signedJwt']    
 
     url = 'https://www.googleapis.com/oauth2/v4/token'
     data = {'grant_type' : 'urn:ietf:params:oauth:grant-type:jwt-bearer',
@@ -143,13 +135,11 @@ class gcs_auth(object):
     exptime = now + 3600
     id_token_claim =('{"iss":"%s","scope":"%s", "aud":"%s","exp":%s,"iat":%s}') %(client_id,id_scope,audience,exptime,now)   
 
-    jwt = self._urlsafe_b64encode(jwt_header) + '.' + self._urlsafe_b64encode(unicode(id_token_claim, 'utf-8')) 
-    slist = resource.serviceAccounts().signBlob(name='projects/mineral-minutia-820/serviceAccounts/'+client_id, 
-                                                  body={'bytesToSign': base64.b64encode(jwt) })
+    slist = resource.serviceAccounts().signJwt(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
+                                                  body={'payload': id_token_claim })
+    resp = slist.execute()     
+    signed_jwt = resp['signedJwt']
 
-    resp = slist.execute()
-    r = self._urlsafe_b64encode(base64.decodestring(resp['signature']))
-    signed_jwt = jwt + '.' + r    
 
     self.log('Self-signed id_token:: ' + signed_jwt,  logging.INFO)
 
