@@ -6,7 +6,7 @@ Proxy servers are not uncommon and I found some of my customers accessing Google
 
 Most of the time, its a simple forward proxy with no authentication and never with SSL interception (which IMHO, is a really questionable, see [link](https://github.com/salrashid123/squid_proxy#https-intercept))
 
-Fortunately, many of our APIs piggyback off of the native language proxy configuration settings (eg. ```http_proxy``` env variable) so that part
+Fortunately, many of our APIs piggyback off of the native language proxy configuration settings (eg. ```https_proxy``` env variable) so that part
 makes it easier.
 
 This article describes the various proxy configurations you can use while accessing google APIs and I thought i'd consolidate some of my findings and issues with configuring google libraries into a doc to share.
@@ -322,7 +322,7 @@ C# also uses the environment variables though for some services, enabling it req
 
 
 ```
-export http_proxy=http://127.0.0.1:3128
+export https_proxy=http://127.0.0.1:3128
 ```
 
 then
@@ -395,7 +395,7 @@ NodeJS also uses the environment variable directly for _both_ authentication and
 
 so simply setting
 ```
-export http_proxy=http://localhost:3128
+export https_proxy=http://localhost:3128
 ```
 
 and then running the sample
