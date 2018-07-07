@@ -10,7 +10,7 @@ using Google.Apis.Oauth2.v2;
 using Google.Apis.Oauth2.v2.Data;
 using Google.Apis.Services;
 
-using Google.Storage.V1;
+using Google.Cloud.Storage.V1;
 
 namespace Oauth2Harness
 {
@@ -48,7 +48,7 @@ namespace Oauth2Harness
 
             var client = StorageClient.Create();
             
-            foreach (var obj in client.ListObjects("your_project", ""))
+            foreach (var obj in client.ListObjects("your-project", ""))
             {
                 Console.WriteLine(obj.Name);
             }

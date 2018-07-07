@@ -1,8 +1,6 @@
-application: your-app-id
-version: 1
 runtime: go
 api_version: go1
-vm: false 
+
 
 handlers:
 
@@ -10,6 +8,6 @@ handlers:
   script: _go_app  
   secure: always 
 
-- url: /
+- url: /.*
   script: _go_app  
   secure: always

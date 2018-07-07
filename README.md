@@ -81,7 +81,7 @@ using the default account currently initialized by gcloud.
 To use the mechanisms here, you need to initialize gcloud's application defaults:
 
 ```bash
-gcloud beta auth application-default login
+gcloud auth application-default login
 
 ```
 
@@ -130,6 +130,7 @@ List buckets using an environment variable and then google.auth.default() creden
 ```python
 from google.cloud import storage
 import google.auth
+impot os
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "YOUR_JSON_CERT.json"
 credentials, project = google.auth.default()
@@ -171,26 +172,73 @@ for bkt in buckets:
 
 ##### Iterators
 
-see [google cloud python iterators](https://googlecloudplatform.github.io/google-cloud-python/latest/iterators.html)
+see 
+ - [google cloud python iterators](https://gcloud-python.readthedocs.io/en/stable/core/iterators.html)
+ - [page iterators](https://googlecloudplatform.github.io/google-cloud-python/latest/core/page_iterator.html)
+
+
+* Logging:
 
 ```python
 import os
-#os.environ["GOOGLE_CLOUD_DISABLE_GRPC"] = "true"
-
+import pprint
 from google.cloud import logging
+
+from google.cloud.logging import ASCENDING
 from google.cloud.logging import DESCENDING
 
+pp = pprint.PrettyPrinter(indent=1)
+
 FILTER = 'resource.type="gae_app" AND logName="projects/mineral-minutia-820/logs/appengine.googleapis.com%2Frequest_log" AND protoPayload.resource="/"'
+
 client = logging.Client()
+
 iterator = client.list_entries(filter_=FILTER, order_by=DESCENDING)
 for page in iterator.pages:
   print('    Page number: %d' % (iterator.page_number,))
   print('  Items in page: %d' % (page.num_items,))
   print('Items remaining: %d' % (page.remaining,))
   print('Next page token: %s' % (iterator.next_page_token,))  
-  print('----------------------------')    
+  print('----------------------------')
   for entry in page:
       print(entry.timestamp)
+```
+
+* Monitoring:
+
+```python
+
+# virtualenv env
+# source env/bin/activate
+# pip install google-cloud-monitoring==0.30.0
+
+import datetime, time
+import pprint
+from google.cloud import monitoring_v3
+from google.cloud.monitoring_v3.query import Query
+
+client = monitoring_v3.MetricServiceClient()
+
+metric_type = 'serviceruntime.googleapis.com/api/request_count'
+resource_type = 'consumed_api'
+service = 'logging.googleapis.com'
+
+now = datetime.datetime.utcnow()
+fifteen_mins_ago =  now - datetime.timedelta(minutes=15)
+
+q = Query(client, project='YOUR_PROJECT', metric_type=metric_type, minutes=10)
+q.select_interval(end_time=now,start_time=fifteen_mins_ago)
+q.select_resources(resource_type=resource_type, service=service)
+
+for timeseries in q.iter():
+  print '========== Metric: '
+  #pprint.pprint(timeseries)
+  print '========== Points: '
+  for p in timeseries.points:
+   print repr(p)
+   print str(p.start_time) + ' --> ' + str(p.end_time) + '  : [' +  str(p.value.get('bucketCounts')) + ']'
+  print('-----------------')
+
 ```
 
 ##### Using google.auth for GoogleAPIs
@@ -201,6 +249,9 @@ The following shows transport authorization for the original Google APIs
 ```python
 import oauth2client
 from oauth2client.client import GoogleCredentials
+import httplib2
+
+http = httplib2.Http()
 credentials = GoogleCredentials.get_application_default()
 if credentials.create_scoped_required():
   credentials = credentials.create_scoped(scopes)
@@ -216,23 +267,26 @@ If you need to use the more recent Google Cloud Auth library, you need to cast t
 ```python
 import google.auth
 import google_auth_httplib2
+
+scopes = ['https://www.googleapis.com/auth/devstorage.read_write']
 credentials, project = google.auth.default(scopes=scopes)
 http =  google_auth_httplib2.AuthorizedHttp(credentials)
 ```
 
-```python
+or preferably init a cloud API:
 
-# Using Google Cloud APIs
+```python
 from google.cloud import storage
 import google.auth
 from google.oauth2 import service_account
+import os
 
 #credentials = service_account.Credentials.from_service_account_file('YOUR_JSON_CERT.json')
 #if credentials.requires_scopes:
 #  credentials = credentials.with_scopes(['https://www.googleapis.com/auth/devstorage.read_write'])
 #client = storage.Client(credentials=credentials)
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "YOUR_JSON_CERT.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/srashid/gcp_misc/certs/mineral-minutia-820-83b3ce7dcddb.json"
 credentials, project = google.auth.default()    
 client = storage.Client(credentials=credentials)
 buckets = client.list_buckets()
@@ -252,6 +306,31 @@ The following describes using java default credentials.  You can explictly _setC
 The various credential types can be found here:
 * [com.google.auth.oauth2](https://github.com/google/google-auth-library-java/tree/master/oauth2_http/java/com/google/auth/oauth2)
 * [Credential Types](https://github.com/google/google-auth-library-java#google-auth-library-oauth2-http)
+
+The samples conained within
+
+- [auth/service/javaapp](auth/service/javaapp)
+- [auth/compute/javaapp](auth/compute/javaapp)
+
+Shows one sample app that uses both library types.  At the time of writing (7/7/18), there is a conflict between the grpc dependencies and google apis.
+
+WHich means, if you use GoogleAPIs, comment out the sections for Cloud API in the pom and .java files:
+
+for Cloud APIs, use:
+- pom.xml
+```xml
+  <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-storage</artifactId>
+      <version>1.35.0</version>
+  </dependency>
+
+  <dependency>
+    <groupId>com.google.cloud</groupId>
+    <artifactId>google-cloud-pubsub</artifactId>
+    <version>1.35.0</version>
+  </dependency>
+```
 
 ```java
 import com.google.cloud.storage.Bucket;
@@ -281,85 +360,94 @@ Storage storage_service = StorageOptions.newBuilder()
 			.getService();			
 */
 
-Storage  storage_service = StorageOptions.defaultInstance().service();
-
-Iterator<Bucket> bucketIterator = storage_service.list().iterateAll();
-while (bucketIterator.hasNext()) {
-  System.out.println(bucketIterator.next());
+Storage storage_service = StorageOptions.newBuilder()
+	.build()
+	.getService();	
+for (Bucket b : storage_service.list().iterateAll()){
+  System.out.println(b);
 }
-
-
+          
+// You can also use the client to generate a signed URL:
 URL signedUrl = storage_service.signUrl(BlobInfo.newBuilder("your_project", "a.txt").build(), 60,  TimeUnit.SECONDS);
 System.out.println(signedUrl);
-
 ```
 
 ##### Proxy Server Settings
 
-- [https://github.com/grpc/grpc-java/releases/tag/v1.0.3](https://github.com/grpc/grpc-java/releases/tag/v1.0.3)
+see [proxy/README.md](proxy/README.md)
+
 ```  
-export  GRPC_PROXY_EXP=proxy_server:3128
+export  https_proxy=proxy_server:3128
 ```
-#### Credential Providers
+
+#### Credential/Channel Providers
 
 ```java
-import com.google.api.gax.grpc.InstantiatingChannelProvider;
+
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+
 import com.google.api.gax.core.GoogleCredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.auth.oauth2.ServiceAccountCredentials;
-import com.google.auth.Credentials;
+import com.google.api.gax.grpc.GrpcTransportChannel;
+import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.api.gax.rpc.FixedTransportChannelProvider;
 
-	String cert_file = "GCPNETAppID-e65deccae47b.json";
+import com.google.cloud.pubsub.v1.Publisher;
+import com.google.cloud.pubsub.v1.TopicAdminClient;
+import com.google.cloud.pubsub.v1.TopicAdminSettings;
+import com.google.cloud.pubsub.v1.TopicAdminClient.ListTopicSubscriptionsPagedResponse;
+import com.google.cloud.pubsub.v1.TopicAdminClient.ListTopicsPagedResponse;
+import com.google.pubsub.v1.ProjectTopicName;
+import com.google.pubsub.v1.ListTopicsRequest;
+import com.google.pubsub.v1.ProjectName;
+import com.google.pubsub.v1.ProjectTopicName;
+import com.google.pubsub.v1.Topic;
+
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+
+    // or set ADC
     //export GOOGLE_APPLICATION_CREDENTIALS="/path/to/keyfile.json"
-
     String cred_env = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
-    System.out.println(cred_env);
-    List<String> ll = Arrays.asList("https://www.googleapis.com/auth/cloud-platform");
+	GoogleCredentials creds = GoogleCredentials.getApplicationDefault();	  	  
+    //String cert_file = "keyfile.json";    
+	//GoogleCredentials creds = GoogleCredentials.fromStream(new FileInputStream(cred_env));	
+	FixedCredentialsProvider credentialsProvider = FixedCredentialsProvider.create(creds);
+	  
+	///ManagedChannel channel = ManagedChannelBuilder.forTarget("pubsub.googleapis.com:443").build();
+    //TransportChannelProvider channelProvider = FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel));
+		  
+	TransportChannelProvider channelProvider = TopicAdminSettings.defaultTransportChannelProvider();
 
-    //GoogleCredentialsProvider myprovider = GoogleCredentialsProvider.newBuilder().setScopesToApply(ll).build();
-    ServiceAccountCredentials creds = ServiceAccountCredentials.fromStream(new FileInputStream(cert_file));
-
-    FixedCredentialsProvider myprovider = FixedCredentialsProvider.create(creds);
-    System.out.println(myprovider.getCredentials() );
-
-     InstantiatingChannelProvider channelProvider = TopicAdminSettings.defaultChannelProviderBuilder()
-        .setCredentialsProvider(myprovider)
-        .build();
+	TopicAdminClient topicClient =
+	  TopicAdminClient.create(
+		  TopicAdminSettings.newBuilder()
+			  .setTransportChannelProvider(channelProvider)
+			  .setCredentialsProvider(credentialsProvider)
+			  .build());
 ```
 
 ##### Async Futures
 
-```java
-import com.google.api.client.http.HttpTransport;
-import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
-import com.google.cloud.pubsub.spi.v1.Publisher;
-import com.google.cloud.pubsub.spi.v1.TopicAdminClient;
-import com.google.cloud.pubsub.spi.v1.TopicAdminSettings;
-import com.google.protobuf.ByteString;
-import com.google.pubsub.v1.PubsubMessage;
-import com.google.pubsub.v1.Topic;
-import com.google.pubsub.v1.TopicName;
+see [Example](https://github.com/GoogleCloudPlatform/java-docs-samples/blob/master/pubsub/cloud-client/src/main/java/com/example/pubsub/PublisherExample.java#L40)
 
-import com.google.api.gax.grpc.InstantiatingChannelProvider;
-import com.google.api.gax.core.GoogleCredentialsProvider;
+```java
+
 import com.google.iam.v1.GetIamPolicyRequest;
 import com.google.iam.v1.Policy;
 import com.google.iam.v1.SetIamPolicyRequest;
 import com.google.iam.v1.Binding;
 import com.google.cloud.Role;
 
-
-    List<String> ll = Arrays.asList("https://www.googleapis.com/auth/cloud-platform");
-    GoogleCredentialsProvider myprovider = GoogleCredentialsProvider.newBuilder().setScopesToApply(ll).build();
-    System.out.println(myprovider.getCredentials());
-
-     InstantiatingChannelProvider channelProvider = TopicAdminSettings.defaultChannelProviderBuilder()
-        .setCredentialsProvider(myprovider)
-        .build();    
-
-     TopicAdminSettings topicAdminSettings =  TopicAdminSettings.defaultBuilder().setChannelProvider(channelProvider).build();
-     TopicAdminClient topicAdminClient =  TopicAdminClient.create(topicAdminSettings);
+    // setup topicadmin client using the bit above
+	TopicAdminClient topicClient =
+	  TopicAdminClient.create(
+		  TopicAdminSettings.newBuilder()
+			  .setTransportChannelProvider(channelProvider)
+			  .setCredentialsProvider(credentialsProvider)
+              .build());
+              
       String formattedResource = TopicName.create("mineral-minutia-820", "saltopic2").toString();
 
       GetIamPolicyRequest request = GetIamPolicyRequest.newBuilder()
@@ -436,27 +524,35 @@ The _google-cloud_ node package initalizes the Cloud API library set:
 * [https://github.com/GoogleCloudPlatform/google-cloud-node](https://github.com/GoogleCloudPlatform/google-cloud-node)
 * [https://googlecloudplatform.github.io/google-cloud-node/#/](https://googlecloudplatform.github.io/google-cloud-node/#/)
 
+The sample under [auth/compute/nodeapp](auth/compute/nodeapp) shows both Cloud APIs and Google APIs
 
 ```node
-var log4js = require("log4js");
-var logger = log4js.getLogger();
+const Storage = require('@google-cloud/storage');
+const storage = new Storage({
+    projectId: 'your-project',
+  });
 
-
-// var gcloud = require('google-cloud')({
-//  keyFilename: '/path/to/keyfile.json'
-// });
-
-var gcloud = require('google-cloud');
-
-var gcs = gcloud.storage();
-
-gcs.getBuckets(function(err, buckets) {
+storage.getBuckets(function(err, buckets) {
   if (!err) {
   	buckets.forEach(function(value){
   			logger.info(value.id);
-	});    
+	});
   }
 });
+
+const Pubsub = require('@google-cloud/pubsub');
+const pubsub = Pubsub({
+    projectId: 'your-project'
+  });
+  pubsub.getTopics((err, topic) => {
+      if (err) {
+          logger.error(err);
+          return;
+      }
+      topic.forEach(function(entry) {
+      logger.info(entry.name);
+      });
+  });
 ```
 
 #### Cloud C#
@@ -466,8 +562,10 @@ Use [Google.Cloud.Storage.V1](https://www.nuget.org/packages/Google.Cloud.Storag
 * [google-cloud-dotnet](https://github.com/GoogleCloudPlatform/google-cloud-dotnet)
 * [API Documentation](http://googlecloudplatform.github.io/google-cloud-dotnet/docs/Google.Cloud.Storage.V1/)
 
+See [auth/service/dotnet](auth/service/dotnet) for sample for both Cloud APIs and Google APIs libraries.
+
 ```csharp
-using Google.Storage.V1;
+using Google.Cloud.Storage.V1;
 
 namespace CloudStorageAppGcloud
 {
@@ -548,12 +646,19 @@ Remember to edit app.yaml file with your appID.
 
 If running on the dev_appserver, you will need to set the local service account id and certificate first:
 ```bash
-mkdir lib
-pip install --target=lib  requests google-api-python-client httplib2 oauth2client
+cd auth/gae/pyapp
 
+virtualenv env
+source env/bin/activate
+pip install -t lib  -r requirements.txt
+deactvate && rm -rf env
+
+# To run with your own gcloud credentials
+dev_appserver.py app.yaml
+
+# For service account credentials
 cat your_svc_account.p12 | openssl pkcs12 -nodes -nocerts -passin pass:notasecret | openssl rsa > key.pem
-
-gcloud preview app run app.yaml --appidentity-email-address=YOUR_SERVICE_ACCOUNT_ID@developer.gserviceaccount.com --appidentity-private-key-path=key.pem
+dev_appserver.py app.yaml --appidentity-email-address=YOUR_SERVICE_ACCOUNT_ID@developer.gserviceaccount.com --appidentity-private-key-path=key.pem
 
 ```
 
@@ -564,6 +669,18 @@ For info on ```--appidentity-email-address``` and ```--appidentity-private-key-p
 Under [auth/compute/pyapp](auth/compute/pyapp)  Runs a simple application on compute engine using *Application Default Credentials*.
 
 *AppAssertionCredentials* is also shown but commented
+
+or 
+
+```
+cd auth/compute/pyapp
+virtualenv env
+source env/bin/activate
+pip install -r requirements.txt
+
+python compute.py
+```
+
 
 #### Service Account File
 
@@ -576,6 +693,19 @@ For more details, goto [Service Accounts](https://developers.google.com/api-clie
 Under [auth/userflow/pyapp](auth/userflow/pyapp)  Runs a simple application that performs user-interactive webflow and propmpts the user for consent.  Download an *installed* app client_secrets.json and reference it for the 'flow_from_clientsecrets()' method.
 
 For more deails, goto [flow_from_clientsecrets](https://developers.google.com/api-client-library/python/guide/aaa_oauth#flow_from_clientsecrets)
+
+The sample also shows the simplified flow with a browser listener (so that you dont' have to type in the code manually):
+
+```python
+from google_auth_oauthlib.flow import InstalledAppFlow
+flow = InstalledAppFlow.from_client_secrets_file(
+    'client_secrets.json',
+    scopes=['profile', 'email'])
+
+flow.run_local_server()
+
+client = photos_v1.PhotoServiceClient(credentials=flow.credentials)
+```
 
 #### Misc
 
@@ -607,9 +737,12 @@ logging.getLogger('apiclient.discovery').setLevel(logging.DEBUG)
 httplib2.debuglevel=3
 ```
 
-##### Appengine Cloud Endpoints
+##### Appengine Cloud Endpoints Framework
 
-Sample discovery for Appengine Cloud Enpoints
+Sample discovery for Appengine Cloud Enpoints.
+
+>> Note: this is for use with Endpoints Framework running on GAE python27 and java7 (not OpenAPI)
+
 ```python
 service = build(serviceName='myendpoint', discoveryServiceUrl='https://yourappid.appspot.com/_ah/api/discovery/v1/apis/yourendpoint/v1/rest',version= 'v1',http=http)
 resource = service.yourAPI()
@@ -624,6 +757,9 @@ See [credential store](https://developers.google.com/api-client-library/python/g
 ##### ID Token from Service Account JSON Signed by Google
 
 If you need an id_token issued by Google using your JSON certificate:
+
+THe old way was to run through the full flow _manually_:
+
 ```python
 from oauth2client.service_account import ServiceAccountCredentials
 credentials = ServiceAccountCredentials.from_json_keyfile_name('YOUR_SERVICE_AcCOUNT.json')
@@ -646,7 +782,12 @@ res = json.loads(conn.getresponse().read())
 print res
 ```
 
-##### Returns JSON with a JWT signed by Google:
+The new (preferred) way is to use the new ```iamcredentials`` API directly.  See [id_tokens/README.md](id_tokens/README.md)
+
+- [id_tokens/iam_svc_tokens/main.py](id_tokens/iam_svc_tokens/main.py).  
+
+
+both which Returns JSON with a JWT signed by Google:
 
 ```json
 {"id_token": "YOUR_ID_TOKEN_SIGNED_BY_GOOGLE"}
@@ -666,8 +807,7 @@ Decoded JWT id_token:
 }
 ```
 
-In the same flow, if you used *'scope': 'https://www.googleapis.com/auth/userinfo.email'*, the return fields would include an access_token scoped to userinfo.email for the service account.  
-You do not need to explicitly recall the access_token as that is normally used internally when a Credential is initialized for a given Google API.
+If you are running the flow directly, if you used *'scope': 'https://www.googleapis.com/auth/userinfo.email'*, the return fields would include an access_token scoped to userinfo.email for the service account.  
 
 ***  
 
@@ -679,11 +819,7 @@ You do not need to explicitly recall the access_token as that is normally used i
 
 Under [auth/gae/javaapp](auth/gae/javaapp).  Runs a simple application using both *Application DefaultCredentials* and *AppIdentityService*.  To deploy, edit the *build.gradle* file and enter the username of an administrator on the GAE application.
 
-```bash
-gradle task
-gradle appengineRun
-gradle appengineDeploy
-```
+Sample shows both Cloud Client and Google API library set
 
 ```bash
 mvn appengine:run
@@ -693,10 +829,6 @@ mvn appengine:deploy
 
 Under [auth/compute/javaapp](auth/compute/javaapp).  Runs a simple application using both *Application DefaultCredentials* and *ComputeCredential*.
 
-```bash
-gradle task
-gradle run
-```
 
 ```bash
 mvn exec:java
@@ -705,11 +837,6 @@ mvn exec:java
 
 Under [auth/service/javaapp](auth/service/javaapp).  Runs a simple application using both *Application DefaultCredentials* and by directly reading in the JSON certificate file.  If the *GOOGLE_APPLICATION_CREDENTIALS* variable is set to point to the JSON file, the applicationDefault profile will also read the JSON file (otherwise, it will attempt to pick up the gcloud credentials)
 
-```bash
-export GOOGLE_APPLICATION_CREDENTIALS=/path/to/you/json/file.json
-gradle task
-gradle run
-```
 
 ```bash
 mvn exec:java
@@ -717,11 +844,6 @@ mvn exec:java
 #### UserFlow
 
 Under [auth/userflow/javaapp](auth/userflow/javaapp).  Runs a simple webflow application to acquire user consent for GoogleAPIs.  This particular userflow launches a browser and listener.
-
-```bash
-gradle task
-gradle run
-```
 
 ```bash
 mvn exec:java
@@ -791,6 +913,8 @@ See documentatin on [Drive](https://developers.google.com/drive/web/credentials?
 See [ExponentialBackOff](https://developers.google.com/api-client-library/java/google-http-java-client/backoff)
 
 
+Usign GoogleAPIs:
+
 ```java
 import com.google.api.client.util.ExponentialBackOff;
 
@@ -835,46 +959,72 @@ import com.google.api.gax.retrying.RetrySettings;
 #### Appengine
 Under [auth/gae/goapp](auth/gae/goapp).  Runs a simple GAE application using both *Application DefaultCredentials* and *AppEngineTokenSource*.  To deploy:
 
+> Note: for use with Appengine Standard:
 
 ```bash
 mkdir extra
-export GOPATH=/path/to/where/the/extra/folder/is
+export GOPATH=`pwd`/extra
+
 go get golang.org/x/oauth2
 go get google.golang.org/appengine/...
 go get google.golang.org/cloud/compute/...
 go get google.golang.org/api/oauth2/v2
+go get cloud.google.com/go/compute/metadata
 
-# vm: false
-google-cloud-sdk/go_appengine/goapp serve src/app.yaml
-google-cloud-sdk/go_appengine/goapp deploy src/app.yaml
 
-# vm: true
-uncomment appengine.Main in func main
-gcloud app run src/app.yaml
-gcloud app deploy src/app.yaml --version 1 --set-default
+run locally:
+  dev_appserver.py src/app.yaml
+
+deploy:
+  gcloud app deploy deploy src/app.yaml
+
 ```
 
 #### ComputeEngine
 
 Under [auth/compute/goapp](auth/compute/goapp).  Runs a simple application using both *Application DefaultCredentials* and *ComputeTokenSource*.  To deploy:
 
+> Make sure you create a GCE instance with the ```userinfo.email``` scope.  That will allow the token to be used against the oauth2 endpoint
+
 ```bash
-go get golang.org/x/net/context
-go get golang.org/x/oauth2/google
+export GOPATH=`pwd`
+
+go get golang.org/x/oauth2
 go get google.golang.org/cloud/compute/...
 go get google.golang.org/api/oauth2/v2
+go get cloud.google.com/go/compute/metadata
+
+
 go run src/main.go
 ```
 
 #### Service Account JSON File
 
-Under [auth/service/goapp](auth/service/goapp).  Runs a simple application using both *Application DefaultCredentials* and directly reading *JWTConfigFromJSON*.  To deploy:
+Under [auth/service/goapp](auth/service/goapp).  Runs a simple application using both *Application DefaultCredentials* and directly reading *JWTConfigFromJSON*.  
+
+The sample also demonstrates _both_ google api clients and google cloud client libraries.
+
+To use:
+
+edit
+```	serviceAccountJSONFile := "YOUR_SERVICE_ACCOUNT_JSON_FILE"```   and set the path to your service account JSON file.
+After that, you can either explictly use the credential type for service account (```JWTConfigFromJSON```, or set the environment variable ause ADC)
+
+THis sample also uses the service account to iterate over the Cloud Storage buckets.  Make sure the service account has that permissoin
 
 ```bash
-go get golang.org/x/net/context
-go get golang.org/x/oauth2/google
+export GOPATH=`pwd`
+
+go get golang.org/x/oauth2
 go get google.golang.org/cloud/compute/...
 go get google.golang.org/api/oauth2/v2
+go get cloud.google.com/go/compute/metadata
+go get github.com/googleapis/gax-go 
+go get o.opencensus.io/trace 
+go get go.opencensus.io/plugin/ochttp 
+go get go.opencensus.io/exporter/stackdriver/propagation 
+go get google.golang.org/grpc
+
 go run src/main.go
 ```
 
@@ -882,13 +1032,23 @@ go run src/main.go
 
 Under [auth/userflow/goapp](auth/userflow/goapp).   Runs a simple webflow application to acquire user consent for GoogleAPIs.  This particular userflow launches a link URL and expects the authorization token to get entered (installed application).
 
+To use, go to the cloud console, "API & Credentials > Credentials", then "Create Credentials > Oauth2 Credentials > Other".  Copy the clientID and secret into main.go:
+
+```
+        ClientID:     "YOUR_CLIENT_ID",
+        ClientSecret: "YOUR_CLIENT_SECRET",
+```
+
 ```bash
 go get golang.org/x/net/context
 go get golang.org/x/oauth2/google
 go get google.golang.org/cloud/compute/...
 go get google.golang.org/api/oauth2/v2
+
 go run src/main.go
 ```
+
+You will see a URL.  Copy that URL to a browser, login and then enter the code.  This sample runs the "installed application" flow
 
 #### Misc
 
@@ -903,6 +1063,12 @@ client.Transport = &transport.APIKey{
 ```
 
 ##### ID Token Signed by Google
+
+The following only works with your local (user) gcloud credentials.
+
+Also see 
+
+- [id_token/README.md](id_token/README.md)
 
 ```golang
 import (
@@ -1104,6 +1270,16 @@ export NODE_DEBUG=request
 
 * [Google API .NET Library](https://developers.google.com/api-client-library/dotnet/get_started)
 
+
+The following code snippet demonstrates *both* google apis and google cloud libraries all in one [auth/compute/dotnet](auth/compute/dotnet):
+
+```
+cd auth/compute/dotnet
+dotnet restore
+dotnet run
+```
+
+
 #### Appengine
 
 GAE Standard does not support .NET as a runtime.  However, you can deploy your application to GAE Flex if you run .NET Core on Linux.  See the following sample that runs a .NET
@@ -1115,9 +1291,21 @@ means you cannot use Google APIs from within a Container.   There are some [port
 
 Under [auth/compute/dotnet](auth/compute/dotnet).  Runs a simple application using both *Application DefaultCredentials* and *ComputeCredential*.
 
+```
+dotnet restore
+dotnet run
+```
+
 #### Service Account JSON File
 
 Under [auth/service/dotnet](auth/service/dotnet).  Runs a simple application using both *Application DefaultCredentials* using a **JSON Certificate** and by directly reading in the **PKCS12 Certificate** file.  If the *GOOGLE_APPLICATION_CREDENTIALS* variable is set to point to the **JSON file**, the applicationDefault profile will also read the JSON file (otherwise, it will attempt to pick up the gcloud credentials).
+
+Edit [service/dotnet/ServiceAuth.cs](service/dotnet/ServiceAuth.cs) file and set the path to the service account key file.  Then,
+
+```
+dotnet restore
+dotnet run
+```
 
 #### UserFlow
 

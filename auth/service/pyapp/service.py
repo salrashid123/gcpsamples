@@ -8,10 +8,11 @@ import os
 
 scope='https://www.googleapis.com/auth/userinfo.email'
 
-#credentials = ServiceAccountCredentials.from_json_keyfile_name('your-service-account.json')
 
 # for JSON_CERTIFICATE_FILES
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "YOUR_JSON_KEY_FILE"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "your-service-account.json"
+
+#credentials = ServiceAccountCredentials.from_json_keyfile_name('your-service-account.json')
 credentials = GoogleCredentials.get_application_default()
 if credentials.create_scoped_required():
   credentials = credentials.create_scoped(scope)
@@ -35,7 +36,6 @@ from google.oauth2 import service_account
 #  credentials = credentials.with_scopes(['https://www.googleapis.com/auth/devstorage.read_write'])
 #client = storage.Client(credentials=credentials)
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "YOUR_JSON_CERT.json"
 credentials, project = google.auth.default()    
 client = storage.Client(credentials=credentials)
 buckets = client.list_buckets()

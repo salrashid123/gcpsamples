@@ -6,33 +6,29 @@ package main
 // go get google.golang.org/appengine/...
 // go get google.golang.org/cloud/compute/...
 // go get google.golang.org/api/oauth2/v2
+// go get cloud.google.com/go/compute/metadata
 
 // for vm: false
-// google-cloud-sdk/go_appengine/goapp serve src/app.yaml
-// google-cloud-sdk/go_appengine/goapp deploy src/app.yaml
-
-// for vm: true
-// uncomment appengine.Main() in func main()
-// gcloud preview app run src/app.yaml
-// gcloud preview app deploy src/app.yaml --version 1 --set-default
+// dev_appserver.py src/app.yaml
+// gcloud app deploy src/app.yaml
 
 import (
 	//"appengine"
 	"fmt"
+	"net/http"
+
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	oauthsvc "google.golang.org/api/oauth2/v2"
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/log"
 	"google.golang.org/appengine/urlfetch"
-	"net/http"
 )
 
 const ()
 
 func main() {
-	// for vm: true
-	// appengine.Main()
+	appengine.Main()
 }
 
 func init() {

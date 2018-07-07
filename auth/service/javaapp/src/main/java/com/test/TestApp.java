@@ -3,6 +3,7 @@ package com.test;
 import java.util.Arrays;
 import java.util.Collections;
 import java.io.*;
+/*
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.http.HttpTransport;
@@ -13,15 +14,50 @@ import com.google.api.services.oauth2.Oauth2Request;
 import com.google.api.services.oauth2.Oauth2RequestInitializer;
 import com.google.api.services.oauth2.Oauth2Scopes;
 import com.google.api.services.oauth2.model.Userinfoplus;
-
+*/
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import com.google.api.gax.paging.Page;
+
+import com.google.api.gax.core.GoogleCredentialsProvider;
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.api.gax.grpc.GrpcTransportChannel;
+import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.api.gax.rpc.FixedTransportChannelProvider;
+
+
+import com.google.cloud.pubsub.v1.Publisher;
+import com.google.cloud.pubsub.v1.TopicAdminClient;
+import com.google.cloud.pubsub.v1.TopicAdminSettings;
+import com.google.pubsub.v1.ProjectTopicName;
+import com.google.cloud.pubsub.v1.TopicAdminClient.ListTopicSubscriptionsPagedResponse;
+import com.google.cloud.pubsub.v1.TopicAdminClient.ListTopicsPagedResponse;
+import com.google.pubsub.v1.ListTopicsRequest;
+import com.google.pubsub.v1.ProjectName;
+import com.google.pubsub.v1.ProjectTopicName;
+import com.google.pubsub.v1.Topic;
+
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutureCallback;
+import com.google.api.core.ApiFutures;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.io.FileInputStream;
 
-import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.iam.v1.GetIamPolicyRequest;
+import com.google.iam.v1.Policy;
+import com.google.iam.v1.SetIamPolicyRequest;
+import com.google.iam.v1.Binding;
+import com.google.cloud.Role;
 
 public class TestApp {
 	public static void main(String[] args) {
@@ -31,6 +67,24 @@ public class TestApp {
 	public TestApp() {
 		try
 		{
+
+			// use env or set the path directly
+			String cred_env = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
+			cred_env = "/path/to/your/cert.json";
+			
+/*
+			<!--use:
+				<dependency>
+				<groupId>com.google.api-client</groupId>
+				<artifactId>google-api-client</artifactId>
+				<version>1.23.0</version>
+				</dependency>
+				<dependency>
+				<groupId>com.google.apis</groupId>
+				<artifactId>google-api-services-oauth2</artifactId>
+				<version>v2-rev114-1.22.0</version>
+				</dependency>
+			--> 
 			HttpTransport httpTransport = new NetHttpTransport();             
 			JacksonFactory jsonFactory = new JacksonFactory();
 
@@ -51,26 +105,60 @@ public class TestApp {
 			            .build();				            
 			Userinfoplus ui = service.userinfo().get().execute();
 			System.out.println(ui.getEmail());
-
-
-          // Using Google Cloud APIs with service account file
+*/
+/* 
+          Using Google Cloud APIs with service account file
 		  // You can also just export an export GOOGLE_APPLICATION_CREDENTIALS and use StorageOptions.defaultInstance().service()
 		  // see: https://github.com/google/google-auth-library-java#google-auth-library-oauth2-http
-		  /*
+		  uncomment the dependencies for google-api-client
+		  
+			<dependency>
+				<groupId>com.google.cloud</groupId>
+				<artifactId>google-cloud-storage</artifactId>
+				<version>1.35.0</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.google.cloud</groupId>
+				<artifactId>google-cloud-pubsub</artifactId>
+				<version>1.35.0</version>
+			</dependency>
+*/
+		  
+		  
 		  Storage storage_service = StorageOptions.newBuilder()
-			.setCredentials(ServiceAccountCredentials.fromStream(new FileInputStream("/path/to/your/certificate.json")))
 			.build()
-			.getService();			
-		  */
+			.getService();	
+		  for (Bucket b : storage_service.list().iterateAll()){
+			  System.out.println(b);
+		  }
 
-          // Using Google Cloud APIs
+		  //GoogleCredentials creds = GoogleCredentials.fromStream(new FileInputStream(cred_env));	
+		  GoogleCredentials creds = GoogleCredentials.getApplicationDefault();	  	  
+		  FixedCredentialsProvider credentialsProvider = FixedCredentialsProvider.create(creds);
+		  
+		  ///ManagedChannel channel = ManagedChannelBuilder.forTarget("pubsub.googleapis.com:443").build();
+          //TransportChannelProvider channelProvider = FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel));	
+		  
+		  TransportChannelProvider channelProvider = TopicAdminSettings.defaultTransportChannelProvider();
 
-		  Storage  storage_service = StorageOptions.defaultInstance().service();
-        
-          Iterator<Bucket> bucketIterator = storage_service.list().iterateAll();
-          while (bucketIterator.hasNext()) {
-            System.out.println(bucketIterator.next());
-          }		
+		  TopicAdminClient topicClient =
+			  TopicAdminClient.create(
+				  TopicAdminSettings.newBuilder()
+					  .setTransportChannelProvider(channelProvider)
+					  .setCredentialsProvider(credentialsProvider)
+					  .build());
+
+		  ListTopicsRequest listTopicsRequest =
+							ListTopicsRequest.newBuilder()
+								.setProject(ProjectName.format("your_project"))
+								.build();
+		  ListTopicsPagedResponse response = topicClient.listTopics(listTopicsRequest);
+		  Iterable<Topic> topics = response.iterateAll();
+		  for (Topic topic : topics) 
+			 System.out.println(topic);
+		 
+
 		} 
 		catch (Exception ex) {
 			System.out.println("Error:  " + ex);

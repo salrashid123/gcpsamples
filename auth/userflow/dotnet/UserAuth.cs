@@ -34,6 +34,7 @@ namespace Oauth2Harness
         private async Task Run()
         {
             UserCredential credential;
+            /*
             string CLIENTSECRETS_LOCATION = "c:\\client_secrets.json";
             using (var stream = new FileStream(CLIENTSECRETS_LOCATION, FileMode.Open, FileAccess.Read))
             {
@@ -41,13 +42,14 @@ namespace Oauth2Harness
                     GoogleClientSecrets.Load(stream).Secrets,
                     new[] { Oauth2Service.Scope.UserinfoEmail }, Environment.UserName, CancellationToken.None);
             }
-            /*
+            */
+            
             string clientId = "YOUR_CLIENT_ID";
             string clientSecret = "YOUR_CLIENT_SECRET";
             credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(new ClientSecrets { ClientId = clientId, ClientSecret = clientSecret },
                 new[] { Oauth2Service.Scope.UserinfoEmail }, Environment.UserName, CancellationToken.None);
             Console.WriteLine("Credential file saved at: " + Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
-            */
+            
             var service = new Oauth2Service(new BaseClientService.Initializer()
             {
                 HttpClientInitializer = credential,

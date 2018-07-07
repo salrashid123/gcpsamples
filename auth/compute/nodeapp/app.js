@@ -23,13 +23,33 @@ service.userinfo.get(function(err, info) {
 });
 
 
-var gcloud = require('google-cloud');
-var gcs = gcloud.storage();
 
-gcs.getBuckets(function(err, buckets) {
-  if (!err) {
-  	buckets.forEach(function(value){
-  			logger.info(value.id);
-	});    
-  }
+const Storage = require('@google-cloud/storage');
+const storage = new Storage({
+  projectId: 'your-project',
 });
+
+storage.getBuckets(function(err, buckets) {
+if (!err) {
+  buckets.forEach(function(value){
+      logger.info(value.id);
+});
+}
+});
+
+
+const Pubsub = require('@google-cloud/pubsub');
+
+const pubsub = Pubsub({
+  projectId: 'your-project'
+});
+pubsub.getTopics((err, topic) => {
+    if (err) {
+        logger.error(err);
+        return;
+    }
+    topic.forEach(function(entry) {
+    logger.info(entry.name);
+    });
+});
+

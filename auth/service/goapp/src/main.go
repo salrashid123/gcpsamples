@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"cloud.google.com/go/storage"
 
@@ -18,7 +19,9 @@ import (
 
 func main() {
 
-	//serviceAccountJSONFile := "YOUR_SERVICE_ACCOUNT_JSON_FILE"
+	serviceAccountJSONFile := "YOUR_SERVICE_ACCOUNT_JSON_FILE"
+
+	// A: Uncomment and set service account file directly:
 
 	//dat, err := ioutil.ReadFile(serviceAccountJSONFile)
 	//if err != nil {
@@ -28,10 +31,11 @@ func main() {
 	//if err != nil {
 	//      log.Fatalf("Unable to acquire generate config: %v", err)
 	//}
-	//src := conf.TokenSource(oauth2.NoContext)
 	//client := conf.Client(oauth2.NoContext)
 
-	//os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", serviceAccountJSONFile)
+	// B: Uncomment use env variable that sets service account credentials
+
+	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", serviceAccountJSONFile)
 	src, err := google.DefaultTokenSource(oauth2.NoContext, oauthsvc.UserinfoEmailScope)
 	if err != nil {
 		log.Fatalf("Unable to acquire token source: %v", err)
@@ -48,7 +52,7 @@ func main() {
 	}
 	log.Printf("UserInfo: %v", ui.Email)
 
-	// Using Google Cloud APIs
+	// ------------------  Using Google Cloud APIs --------------------------------
 
 	ctx := context.Background()
 	/*
@@ -64,7 +68,7 @@ func main() {
 		log.Fatalf("Unable to acquire storage Client: %v", err)
 	}
 
-	it := storeageClient.Buckets(ctx, "mineral-minutia-820")
+	it := storeageClient.Buckets(ctx, "YOUR_PROJECT_HERE")
 	for {
 		bucketAttrs, err := it.Next()
 		if err == iterator.Done {

@@ -28,18 +28,23 @@ authClient.authorize(function(err, tokens) {
 });
 
 
-var gcloud = require('google-cloud')({
-  keyFilename: '/path/to/keyfile.json'
+// either set the env variable or keyFilename
+//process.env.GOOGLE_APPLICATION_DEFAULT='/path/to/keyfile.json';
+
+const Storage = require('@google-cloud/storage');
+const storage = new Storage({
+  projectId: 'your_project',
+  keyFilename: '/path/to/keyfile.json',
 });
 
-var gcs = gcloud.storage();
-
-gcs.getBuckets(function(err, buckets) {
-  if (!err) {
-  	buckets.forEach(function(value){
-  			logger.info(value.id);
-	});    
-  }
+storage.getBuckets(function(err, buckets) {
+if (err) {
+  console.log(err);
+}
+if (!err) {
+  buckets.forEach(function(value){
+      logger.info(value.id);
 });
-
+}
+});
 

@@ -11,7 +11,7 @@ using Google.Apis.Oauth2.v2;
 using Google.Apis.Oauth2.v2.Data;
 using Google.Apis.Services;
 
-using Google.Storage.V1;
+using Google.Cloud.Storage.V1;
 
 namespace Oauth2Harness
 {
@@ -47,10 +47,12 @@ namespace Oauth2Harness
                }.FromCertificate(certificate));
             */
             
-            string CREDENTIAL_FILE_JSON = "C:\\your_json_cert.json";
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", CREDENTIAL_FILE_JSON);
+            // a) for google apis:
+
+            //string CREDENTIAL_FILE_JSON = "C:\\your_json_cert.json";
+            //Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", CREDENTIAL_FILE_JSON);
             
-            GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
+            //GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
             if (credential.IsCreateScopedRequired)
                 credential = credential.CreateScoped(new string[] { Oauth2Service.Scope.UserinfoEmail });
             var service = new Oauth2Service(new BaseClientService.Initializer()
@@ -60,6 +62,7 @@ namespace Oauth2Harness
             });
             Console.WriteLine(service.Userinfo.Get().Execute().Email);
 
+            // b) For Google Cloud APIs:
 
             var client = StorageClient.Create();
             

@@ -11,7 +11,7 @@ var logger = log4js.getLogger();
 var SCOPES = ['https://www.googleapis.com/auth/userinfo.email'];
 
 // Taken from: https://developers.google.com/drive/v3/web/quickstart/nodejs
-fs.readFile('client_secrets.json', function processClientSecrets(err, content) {
+fs.readFile('/path/to/client_secret_installed.json', function processClientSecrets(err, content) {
   if (err) {
     logger.error('Error loading client secret file: ' + err);
     return;
