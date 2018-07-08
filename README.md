@@ -1,4 +1,4 @@
-## Google Cloud Platform Samples
+## Google Cloud Platform API hello world samples
 
 ####  samples provided as-is without warranty
 
@@ -172,7 +172,7 @@ for bkt in buckets:
 
 ##### Iterators
 
-see 
+see
  - [google cloud python iterators](https://gcloud-python.readthedocs.io/en/stable/core/iterators.html)
  - [page iterators](https://googlecloudplatform.github.io/google-cloud-python/latest/core/page_iterator.html)
 
@@ -362,11 +362,11 @@ Storage storage_service = StorageOptions.newBuilder()
 
 Storage storage_service = StorageOptions.newBuilder()
 	.build()
-	.getService();	
+	.getService();
 for (Bucket b : storage_service.list().iterateAll()){
   System.out.println(b);
 }
-          
+
 // You can also use the client to generate a signed URL:
 URL signedUrl = storage_service.signUrl(BlobInfo.newBuilder("your_project", "a.txt").build(), 60,  TimeUnit.SECONDS);
 System.out.println(signedUrl);
@@ -412,12 +412,12 @@ import io.grpc.ManagedChannelBuilder;
     String cred_env = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
 	GoogleCredentials creds = GoogleCredentials.getApplicationDefault();	  	  
     //String cert_file = "keyfile.json";    
-	//GoogleCredentials creds = GoogleCredentials.fromStream(new FileInputStream(cred_env));	
+	//GoogleCredentials creds = GoogleCredentials.fromStream(new FileInputStream(cred_env));
 	FixedCredentialsProvider credentialsProvider = FixedCredentialsProvider.create(creds);
-	  
+
 	///ManagedChannel channel = ManagedChannelBuilder.forTarget("pubsub.googleapis.com:443").build();
     //TransportChannelProvider channelProvider = FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel));
-		  
+
 	TransportChannelProvider channelProvider = TopicAdminSettings.defaultTransportChannelProvider();
 
 	TopicAdminClient topicClient =
@@ -447,7 +447,7 @@ import com.google.cloud.Role;
 			  .setTransportChannelProvider(channelProvider)
 			  .setCredentialsProvider(credentialsProvider)
               .build());
-              
+
       String formattedResource = TopicName.create("mineral-minutia-820", "saltopic2").toString();
 
       GetIamPolicyRequest request = GetIamPolicyRequest.newBuilder()
@@ -670,7 +670,7 @@ Under [auth/compute/pyapp](auth/compute/pyapp)  Runs a simple application on com
 
 *AppAssertionCredentials* is also shown but commented
 
-or 
+or
 
 ```
 cd auth/compute/pyapp
@@ -1019,10 +1019,10 @@ go get golang.org/x/oauth2
 go get google.golang.org/cloud/compute/...
 go get google.golang.org/api/oauth2/v2
 go get cloud.google.com/go/compute/metadata
-go get github.com/googleapis/gax-go 
-go get o.opencensus.io/trace 
-go get go.opencensus.io/plugin/ochttp 
-go get go.opencensus.io/exporter/stackdriver/propagation 
+go get github.com/googleapis/gax-go
+go get o.opencensus.io/trace
+go get go.opencensus.io/plugin/ochttp
+go get go.opencensus.io/exporter/stackdriver/propagation
 go get google.golang.org/grpc
 
 go run src/main.go
@@ -1066,7 +1066,7 @@ client.Transport = &transport.APIKey{
 
 The following only works with your local (user) gcloud credentials.
 
-Also see 
+Also see
 
 - [id_token/README.md](id_token/README.md)
 
