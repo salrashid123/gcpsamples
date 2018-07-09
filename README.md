@@ -42,7 +42,8 @@ The following examples use the Oauth2 *service* to demonstrate the initialized c
     - [Go](#cloud-go)
     - [Node](#cloud-node)
     - [c#](#cloud-c)
-    - [gRPC Environment Variables](#grpc-environment-variables)    
+    - [gRPC Environment Variables](#grpc-environment-variables)
+    - [GCS SignedURL with Customer Supplied Encryption Keys](gcs_csek_signedurl)
 * API Client Library
     - [Python](#google-api-python)
     - [Java](#google-api-java)
