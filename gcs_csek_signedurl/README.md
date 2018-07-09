@@ -1,6 +1,6 @@
 # GCS Signed URL with Customer Supplied Encryption Key
 
-Sample java app that uses [google-cloud-java](https://github.com/GoogleCloudPlatform/google-cloud-java) libraries to generate a GCS [Signed URL](https://cloud.google.com/storage/docs/access-control/signed-urls) with (Customer Supplied Encryption Keys)[https://cloud.google.com/storage/docs/encryption/using-customer-supplied-keys] (CSEK).
+Sample java app that uses [google-cloud-java](https://github.com/GoogleCloudPlatform/google-cloud-java) libraries to generate a GCS [Signed URL](https://cloud.google.com/storage/docs/access-control/signed-urls) with [Customer Supplied Encryption Keys](https://cloud.google.com/storage/docs/encryption/using-customer-supplied-keys) (CSEK).
 
 A service account can generate a SigneURL and hand it to a user to perform an authorized upload/download.  THe file that is stored in GCS by default using that will be using a Google Managed Encryption Key.   GCS also allows a user to specify their own encryption key on the object.  The only way to create or access that CSEK enabled object is if the key is supplied along with the request...google cannot access that object in anyway.
 
@@ -40,7 +40,7 @@ The output of the first step will geneatre a signedURL.  Provide this URL to an 
 THe enduser will use the signedURL to upload/download the object but also add on the ```b64encoded``` form of their encryption key and hash of that key in the header:
 
 
-First generate they key,keyhas:
+First generate they key, keyhash:
 ```java
 KeyGenerator keyGen = KeyGenerator.getInstance("AES");
 keyGen.init(256);
