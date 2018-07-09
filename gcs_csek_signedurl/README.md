@@ -120,38 +120,42 @@ Here are some links for constructing signedURL headers:
 - CESK+SignedURL with curl
 
 ```
-        curl -v -H "x-goog-encryption-algorithm:AES256" -H "x-goog-encryption-key:Tsw3RFJyxkQmnlq8vM25jkgZWE5OoHDI5kLKr67S6i8=" -H "x-goog-encryption-key-sha256:WsFuURsydzY2WBItGv2P2HTfNDvEgV262XyTUanRqYY=" -H "x-goog-meta-icecreamflavor:vanilla" -X PUT "https://storage.googleapis.com/mineral-minutia-820/encrypted.txt?GoogleAccessId=svc-2-429@mineral-minutia-820.iam.gserviceaccount.com&Expires=1532323673&Signature=xSwnQR21YoIW64ZZw998Q1UZbYGW8FWEpNqpT2UeIDRA4thQq3erpfn%2FvhIaVCzgUeXd0eTH7dz85GJ40FPlxh%2Fx9KXBE1rx2riPG8Cmel9CeW0P4TrUgZ21%2BozfSPCQ%2BwZNPVOrGg%2FAYvLO5IR9esDKsIiQquNrru1TnDJTsREcIEgjxLi4zEuejd%2FaWSIIMGb%2BKimAmWvzt8Bvtk4bsKQRWfvvBerttr2bpXt624VbRGHsuT2JOQqlzM%2F7JwnTJOb42Bb6UQ8GMxvt41Ow2jYA9gTnqgeR5OKuHaaIiNTZM2StnmSfdweJTtupZ19LycTafdpkbw%2BxWq9ablahblah"  --upload-file encrypted.txt
+curl -v \
+    -H "x-goog-encryption-algorithm:AES256" \
+    -H "x-goog-encryption-key:Tsw3RFJyxkQmnlq8vM25jkgZWE5OoHDI5kLKr67S6i8=" \
+    -H "x-goog-encryption-key-sha256:WsFuURsydzY2WBItGv2P2HTfNDvEgV262XyTUanRqYY=" \
+    -H "x-goog-meta-icecreamflavor:vanilla" \
+    -X PUT "https://storage.googleapis.com/mineral-minutia-820/encrypted.txt?GoogleAccessId=svc-2-429@mineral-minutia-820.iam.gserviceaccount.com&Expires=1532323673&Signature=xSwnQR21YoIW64ZZw998Q1UZbYGW8FWEpNqpT2UeIDRA4thQq3erpfn%2FvhIaVCzgUeXd0eTH7dz85GJ40FPlxh%2Fx9KXBE1rx2riPG8Cmel9CeW0P4TrUgZ21%2BozfSPCQ%2BwZNPVOrGg%2FAYvLO5IR9esDKsIiQquNrru1TnDJTsREcIEgjxLi4zEuejd%2FaWSIIMGb%2BKimAmWvzt8Bvtk4bsKQRWfvvBerttr2bpXt624VbRGHsuT2JOQqlzM%2F7JwnTJOb42Bb6UQ8GMxvt41Ow2jYA9gTnqgeR5OKuHaaIiNTZM2StnmSfdweJTtupZ19LycTafdpkbw%2BxWq9ablahblah"  \
+    --upload-file encrypted.txt
 
-        > PUT /mineral-minutia-820/encrypted.txt?GoogleAccessId=svc-2-429@mineral-minutia-820.iam.gserviceaccount.com&Expires=1532323673&Signature=xSwnQR21YoIW64ZZw998Q1UZbYGW8FWEpNqpT2UeIDRA4thQq3erpfn%2FvhIaVCzgUeXd0eTH7dz85GJ40FPlxh%2Fx9KXBE1rx2riPG8Cmel9CeW0P4TrUgZ21%2BozfSPCQ%2BwZNPVOrGg%2FAYvLO5IR9esDKsIiQquNrru1TnDJTsREcIEgjxLi4zEuejd%2FaWSIIMGb%2BKimAmWvzt8Bvtk4bsKQRWfvvBerttr2bpXt624VbRGHsuT2JOQqlzM%2F7JwnTJOb42Bb6UQ8GMxvt41Ow2jYA9gTnqgeR5OKuHaaIiNTZM2StnmSfdweJTtupZ19LycTafdpkbw%2Bblahblah HTTP/2
-        > Host: storage.googleapis.com
-        > User-Agent: curl/7.60.0
-        > Accept: */*
-        > x-goog-encryption-algorithm:AES256
-        > x-goog-encryption-key:Tsw3RFJyxkQmnlq8vM25jkgZWE5OoHDI5kLKr67S6i8=
-        > x-goog-encryption-key-sha256:WsFuURsydzY2WBItGv2P2HTfNDvEgV262XyTUanRqYY=
-        > x-goog-meta-icecreamflavor:vanilla
-        > Content-Length: 8
-        >
-        * Connection state changed (MAX_CONCURRENT_STREAMS == 100)!
-        * We are completely uploaded and fine
-        < HTTP/2 200
-        < x-guploader-uploadid: AEnB2Ur-cd5eccmHZ0YLGL0ivysV7C1AOQfHyuGEYgOtLO_E3JEnAZmmxCyrvwIvcYVp6-rYkLY1JyFTyg6HLsPjjTQUcmSX6w
-        < etag: "-CNrxx8KkkdwCEAE="
-        < x-goog-generation: 1531114104682714
-        < x-goog-metageneration: 1
-        < x-goog-hash: crc32c=FlsfVQ==
-        < x-goog-hash: md5=HQNwvQlxFPyedRwG5Op+9A==
-        < x-goog-stored-content-length: 8
-        < x-goog-stored-content-encoding: identity
-        < x-goog-encryption-algorithm: AES256
-        < x-goog-encryption-key-sha256: WsFuURsydzY2WBItGv2P2HTfNDvEgV262XyTUanRqYY=
-        < vary: Origin
-        < content-length: 0
-        < date: Mon, 09 Jul 2018 05:28:24 GMT
-        < server: UploadServer
-        < content-type: text/html; charset=UTF-8
-        < alt-svc: quic=":443"; ma=2592000; v="43,42,41,39,35"
-        <
+> PUT /mineral-minutia-820/encrypted.txt?GoogleAccessId=svc-2-429@mineral-minutia-820.iam.gserviceaccount.com&Expires=1532323673&Signature=xSwnQR21YoIW64ZZw998Q1UZbYGW8FWEpNqpT2UeIDRA4thQq3erpfn%2FvhIaVCzgUeXd0eTH7dz85GJ40FPlxh%2Fx9KXBE1rx2riPG8Cmel9CeW0P4TrUgZ21%2BozfSPCQ%2BwZNPVOrGg%2FAYvLO5IR9esDKsIiQquNrru1TnDJTsREcIEgjxLi4zEuejd%2FaWSIIMGb%2BKimAmWvzt8Bvtk4bsKQRWfvvBerttr2bpXt624VbRGHsuT2JOQqlzM%2F7JwnTJOb42Bb6UQ8GMxvt41Ow2jYA9gTnqgeR5OKuHaaIiNTZM2StnmSfdweJTtupZ19LycTafdpkbw%2Bblahblah HTTP/2
+> Host: storage.googleapis.com
+> User-Agent: curl/7.60.0
+> Accept: */*
+> x-goog-encryption-algorithm:AES256
+> x-goog-encryption-key:Tsw3RFJyxkQmnlq8vM25jkgZWE5OoHDI5kLKr67S6i8=
+> x-goog-encryption-key-sha256:WsFuURsydzY2WBItGv2P2HTfNDvEgV262XyTUanRqYY=
+> x-goog-meta-icecreamflavor:vanilla
+> Content-Length: 8
+>
+
+< HTTP/2 200
+< x-guploader-uploadid: AEnB2Ur-cd5eccmHZ0YLGL0ivysV7C1AOQfHyuGEYgOtLO_E3JEnAZmmxCyrvwIvcYVp6-rYkLY1JyFTyg6HLsPjjTQUcmSX6w
+< etag: "-CNrxx8KkkdwCEAE="
+< x-goog-generation: 1531114104682714
+< x-goog-metageneration: 1
+< x-goog-hash: crc32c=FlsfVQ==
+< x-goog-hash: md5=HQNwvQlxFPyedRwG5Op+9A==
+< x-goog-stored-content-length: 8
+< x-goog-stored-content-encoding: identity
+< x-goog-encryption-algorithm: AES256
+< x-goog-encryption-key-sha256: WsFuURsydzY2WBItGv2P2HTfNDvEgV262XyTUanRqYY=
+< vary: Origin
+< content-length: 0
+< date: Mon, 09 Jul 2018 05:28:24 GMT
+< server: UploadServer
+< content-type: text/html; charset=UTF-8
+< alt-svc: quic=":443"; ma=2592000; v="43,42,41,39,35"
 ```
 
 
