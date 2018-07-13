@@ -2,12 +2,11 @@
 
 Sample java app that uses [google-cloud-java](https://github.com/GoogleCloudPlatform/google-cloud-java) libraries to generate a GCS [Signed URL](https://cloud.google.com/storage/docs/access-control/signed-urls) with [Customer Supplied Encryption Keys](https://cloud.google.com/storage/docs/encryption/using-customer-supplied-keys) (CSEK).
 
-A service account can generate a SigneURL and hand it to a user to perform an authorized upload/download.  THe file that is stored in GCS by default using that will be using a Google Managed Encryption Key.   GCS also allows a user to specify their own encryption key on the object.  The only way to create or access that CSEK enabled object is if the key is supplied along with the request...google cannot access that object in anyway.
+GCS SignedURLs allows a service account to generate a url which you can hand to a user to perform an authorized uploads/downloads to Cloud Storage. CSEK sets up a file in GCS such that only the end user with the encryption key can view its contents (not even google can view it). This article show you how to use both capabilities together.
 
-Both Singed URL and CSEK are usually used independently.  This snippet covers a relatively uncommon usecase case:  issuing a signedURL with a CSEK.  THe flow is somewhat awkward:  when you generate the signedURL, you first indicate that encryption will be used by specifying a header value in addition to the other custom headers.  Then provide the signedURL to the enduser who uses the URL to get/put an object.  The user *must* transmit the csek headers with their encryption key AND andy custom headers specified at the time the request was originally signed.
+Both Singed URL and CSEK are usually used independently. This snippet covers a relatively uncommon usecase case: issuing a signedURL with a CSEK. The flow is a little awkward: when you generate the signedURL, you first indicate that encryption will be used by specifying a header value in addition to the other custom headers you may want to set. Then you provide the signedURL to the enduser who uses the URL to get/put an object. The user must transmit the csek headers with their encryption key AND any custom headers specified at the time the request was originally signed.
 
-
-In the following snippet, we're specifying the headers the signedURL will include in the signatuere:
+In the following snippet, we're specifying the headers the signedURL will include in the signature:
 ```java
 BlobInfo BLOB_INFO1 = BlobInfo.newBuilder(BUCKET_NAME, BLOB_NAME).build();
 
@@ -27,7 +26,7 @@ URL url =
 - ```x-goog-meta-icecreamflavor```  is a custom/user-defined header value
 - ```x-goog-encryption-algorithm:AES256```  indicates csek will be used
 
-What we are not specifying are the encryption key values:
+Note: what we are not specifying are the encryption key values:
 
  ```
 x-goog-encryption-key:
