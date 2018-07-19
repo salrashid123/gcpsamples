@@ -44,6 +44,7 @@ The following examples use the Oauth2 *service* to demonstrate the initialized c
     - [c#](#cloud-c)
     - [gRPC Environment Variables](#grpc-environment-variables)
     - [GCS SignedURL with Customer Supplied Encryption Keys](gcs_csek_signedurl)
+    - [JWT Access Token](#jwt_access_token)
 * API Client Library
     - [Python](#google-api-python)
     - [Java](#google-api-java)
@@ -592,7 +593,53 @@ namespace CloudStorageAppGcloud
 - [https://github.com/grpc/grpc/blob/master/doc/environment_variables.md](https://github.com/grpc/grpc/blob/master/doc/environment_variables.md)
 
 
+#### JWT Access Token
 
+-  - [auth/service/jwt_access_token](auth/service/jwt_access_token)
+
+JWT access tokens are efficient way to access certain google apis without the extra round trip to get an ```access_token```.  Unlike the normal Oauth service account flow where you 
+1. use a local service account to sign a JWT, 
+2. Exchange that JWT with google to get an ```access_token```
+3. Use that ```access_token``` to make an API call to google
+
+with JWT Access Tokens, all you do is sign a JWT locally with a service account with the intended Service you want to access and then simply send it to the service.
+
+The following links describes this flow:
+- [JWT Auth](https://developers.google.com/identity/protocols/OAuth2ServiceAccount#jwt-auth)
+
+where these Google APIs will support this:
+- [https://github.com/googleapis/googleapis/tree/master/google](https://github.com/googleapis/googleapis/tree/master/google)
+
+
+eg. for PubSub
+```golang
+	// https://github.com/googleapis/googleapis/blob/master/google/pubsub/pubsub.yaml#L6
+
+	ctx := context.Background()
+	projectID := "YOUR_PROJECT"
+	keyfile := "service_account.json"
+
+	audience := "https://pubsub.googleapis.com/google.pubsub.v1.Publisher"
+
+	keyBytes, err := ioutil.ReadFile(keyfile)
+	if err != nil {
+		log.Fatalf("Unable to read service account key file  %v", err)
+	}
+	tokenSource, err := google.JWTAccessTokenSourceFromJSON(keyBytes, audience)
+	if err != nil {
+		log.Fatalf("Error building JWT access token source: %v", err)
+	}
+	jwt, err := tokenSource.Token()
+	if err != nil {
+		log.Fatalf("Unable to generate JWT token: %v", err)
+	}
+	fmt.Println(jwt.AccessToken)
+
+	pubsubClient, err := pubsub.NewClient(ctx, projectID, option.WithTokenSource(tokenSource))
+	if err != nil {
+		log.Fatalf("Could not create pubsub Client: %v", err)
+	}
+```
 
 #### Google API Client Library for Python
 
