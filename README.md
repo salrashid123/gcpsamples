@@ -95,10 +95,7 @@ The following uses the google-storage client described here: [Storage Client](ht
 ```
 virtualenv env
 source env/bin/activate
-pip install google-cloud
-
-Name: google-cloud
-Version: 0.22.0
+pip install google-cloud-storage
 ```
 
 The following lists some of the various mechanisms to acquire credentials:
@@ -597,8 +594,8 @@ namespace CloudStorageAppGcloud
 
 -  - [auth/service/jwt_access_token](auth/service/jwt_access_token)
 
-JWT access tokens are efficient way to access certain google apis without the extra round trip to get an ```access_token```.  Unlike the normal Oauth service account flow where you 
-1. use a local service account to sign a JWT, 
+JWT access tokens are efficient way to access certain google apis without the extra round trip to get an ```access_token```.  Unlike the normal Oauth service account flow where you
+1. use a local service account to sign a JWT,
 2. Exchange that JWT with google to get an ```access_token```
 3. Use that ```access_token``` to make an API call to google
 

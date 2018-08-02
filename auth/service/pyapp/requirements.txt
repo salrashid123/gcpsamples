@@ -1,4 +1,4 @@
-google-cloud
+google-cloud-storage
 requests
 google-api-python-client
 httplib2
