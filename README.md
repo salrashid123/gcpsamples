@@ -57,6 +57,9 @@ The following examples use the Oauth2 *service* to demonstrate the initialized c
     - JWT
 * [Accessing Google APIs through proxies](proxy/)
 * [Issue and Verify id_tokens](id_token/)
+* [GCS SignedURL with HMAC](gcs_hmac_signedurl)
+* [GCS keyless SignedURL](gcs_keyless_signedurl)
+* [Accessing Google APIs through proxies](proxy/)
 
 For more inforamtion, see:
 * [oauth2 protocol](https://developers.google.com/identity/protocols/OAuth2)
