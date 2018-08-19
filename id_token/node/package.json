@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {},
   "dependencies": {
-    "debug": "~2.2.0",
+    "debug": "2.6.9",
     "google-auth-library": "~0.9.4",
     "googleapis": "2.1.1",
     "google-cloud": "",
