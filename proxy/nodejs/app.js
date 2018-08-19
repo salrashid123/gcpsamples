@@ -2,9 +2,9 @@ var log4js = require("log4js");
 var logger = log4js.getLogger();
 
 const Pubsub = require('@google-cloud/pubsub');
-var gcloud = require('google-cloud');
+const Storage = require('@google-cloud/storage');
 
-var gcs = gcloud.storage();
+var gcs = new Storage();
 gcs.getBuckets(function(err, buckets) {
   if (!err) {
   	buckets.forEach(function(value){
