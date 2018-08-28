@@ -1,7 +1,7 @@
 ## ID Token
 
 
-The following section details how to create an verify various id_tokens.  These tokens comes in various flavors:
+The following section details how to create and verify various id_tokens.  These tokens comes in various flavors:
 
 * google service account id_tokens
 * [OpenIDConnect ID token](https://developers.google.com/actions/reference/rest/Shared.Types/AssertionType)
