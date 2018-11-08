@@ -675,6 +675,21 @@ for i in resp['items']:
   print i['name']
 ```
 
+You can also initialize an `AuthorizedHttp` artifact from `google-auth` library with discovery:
+
+```python
+# http://google-auth.readthedocs.io/en/latest/reference/google.auth.html
+# https://github.com/GoogleCloudPlatform/google-auth-library-python-httplib2
+import google.auth
+import google_auth_httplib2
+credentials, project = google.auth.default(scopes=scopes)
+http =  google_auth_httplib2.AuthorizedHttp(credentials)
+
+service = build(serviceName='cloudtasks', 
+  discoveryServiceUrl='https://cloudtasks.googleapis.com/%24discovery/rest?version=v2beta2', 
+  version= 'v2beta2',http=http)
+```
+
 ### Google API Python
 
 * [Google API Client Library for Python](https://developers.google.com/api-client-library/python/)
