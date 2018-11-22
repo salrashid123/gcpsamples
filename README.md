@@ -55,6 +55,7 @@ The following examples use the Oauth2 *service* to demonstrate the initialized c
     - access_token
     - id_token
     - JWT
+* [Impersonated Credentials](impersonated_credentials/)
 * [Accessing Google APIs through proxies](proxy/)
 * [Issue and Verify id_tokens](id_token/)
 * [GCS SignedURL with HMAC](gcs_hmac_signedurl)
@@ -685,8 +686,8 @@ import google_auth_httplib2
 credentials, project = google.auth.default(scopes=scopes)
 http =  google_auth_httplib2.AuthorizedHttp(credentials)
 
-service = build(serviceName='cloudtasks', 
-  discoveryServiceUrl='https://cloudtasks.googleapis.com/%24discovery/rest?version=v2beta2', 
+service = build(serviceName='cloudtasks',
+  discoveryServiceUrl='https://cloudtasks.googleapis.com/%24discovery/rest?version=v2beta2',
   version= 'v2beta2',http=http)
 ```
 
