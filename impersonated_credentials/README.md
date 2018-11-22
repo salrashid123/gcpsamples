@@ -85,6 +85,53 @@ gcloud compute instances create impersonate-test \
 
 SSH to that instance and run the same sample as above (just remember to comment out the part using service accounts credentials and instead use `google.auth.default()`)
 
+## Token Lifetime
+
+Note that the API surface for `iamcredentials.*` describes a `lifetime` variable.  What that does is pretty self-explanatory in that it just limits the lifetime of the
+derived `access_token`.  By default its one hour `3600s` but will automatically refresh even if the lifetime is set.  Effectively, the lifetime is there for the transient token
+since its auto-refreshed on expiration. 
+
+If on the otherhand what you want is a true static access token for its duration, you will need to extract the impersonated credentials access token and apply it to a generic `Credential` object as such:
+
+```python
+target_credentials = impersonated_credentials.Credentials(
+    source_credentials = source_credentials,
+    target_principal='impersonated-account@your_project.iam.gserviceaccount.com',
+    target_scopes = target_scopes,
+    delegates=[],
+    lifetime=500)
+
+import google.auth.transport.requests
+from google.oauth2.credentials import Credentials
+request = google.auth.transport.requests.Request()
+target_credentials.refresh(request)
+
+derived_access_token = target_credentials.token
+print derived_access_token
+
+static_credentials = Credentials(token=derived_access_token)
+
+client = storage.Client(credentials=static_credentials)
+buckets = client.list_buckets(project='your_project')
+for bucket in buckets:
+    print bucket.name
+```
+
+In the exampel above, tthe final client will only work for 500 seconds
+
+
+## Chained Delegation
+
+Another feature with `iamcredentials.*` api suite is the `delegates` parameter.  What that signifies is the list of service accounts that *must* already have authorization to mint tokens on 
+behalf of the successive account.  The chained list of delegates required to grant the final access_token.  If set, the sequence of identities must have `Service Account Token Creator` capability granted to the prceeding identity.  For example, if set to `[serviceAccountB, serviceAccountC]`, the `source_credential` must have the Token Creator role on `serviceAccountB`.  `serviceAccountB` must have the Token Creator on `serviceAccountC`.  Finally, `C` must have Token Creator on `target_principal`. If left unset, source_credential must have that role on target_principal.
+
+You can think of this as getting a form of a simple 'workflow' where  the source account can't unilaterally acquire permissions on the target but one where a sequece of 'approvals` in a workflow is needed.
+
+
+For more information on this, see:
+
+- [Creating Short-Lived Service Account Credentials](https://cloud.google.com/iam/docs/creating-short-lived-service-account-credentials)
+
 ## Language bindings
 
 At the time of writing (11/25), the 'first class' support for impersonated credentials is not available in all languages 
