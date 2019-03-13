@@ -297,6 +297,32 @@ for bkt in buckets:
   print bkt
 ```
 
+##### Logging_Cloud_python
+
+If you want to enable trace logging with `google-cloud-python*` library set,
+
+```python
+#!/usr/bin/python
+
+from google.cloud import bigquery
+from six.moves import http_client
+
+http_client.HTTPConnection.debuglevel = 5
+
+client = bigquery.Client()
+query_job = client.query("""
+        SELECT timestamp
+FROM
+ `mineral-minutia-820.gae_request_logs.appengine_googleapis_com_request_log_20161119`
+ORDER BY timestamp DESC
+LIMIT
+ 4;""")
+
+results = query_job.result()
+for row in results:
+        print(row)
+```
+
 #### Cloud Java
 
 * [http://googlecloudplatform.github.io/google-cloud-java/0.8.0/index.html](http://googlecloudplatform.github.io/google-cloud-java/0.8.0/index.html)
