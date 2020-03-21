@@ -195,46 +195,71 @@ both would show the following in the proxy access logs which indicates the authe
 
 ## GRPC
 
-Google-cloud-java with GRPC has experimental proxy support using
-```GRPC_PROXY_EXP``` environment variable.
+Java GRPC uses java `java.net.Authenticator.` which you can use to set a username/password for a custom  `Proxy-Authorization`
 
-so first export the environment variable for the GRPC part:
-```
-export GRPC_PROXY_EXP=localhost:31138
+eg, in the snippet below, the proxy headers will be `user1/user`:
+
+```java
+System.setProperty("https.proxyHost", "localhost");
+System.setProperty("https.proxyPort", "3128");
+
+Authenticator.setDefault(
+    new Authenticator() {
+    @Override
+    public PasswordAuthentication getPasswordAuthentication() {
+        return new PasswordAuthentication(
+                "user1", "user1".toCharArray());
+    }
+    }
+);
 ```
 
 then set the ```https.proxyHost=, https.proxyPort=``` env variables or use a GoogleCredential that is  configured to use the proxy.
 
-In the end, your Credentials are acquired by HTTP while PubSub uses GRPC
-
+So if you want both the HTTP-based Credentials API call to oauth2 **and** grpc via the proxy, 
 
 ```java
-HttpTransportFactory hf = new HttpTransportFactory(){
-	@Override
-	public HttpTransport create() {
-		return mHttpTransport;
-	}
-};            
+			// The authenticator is for gRPC
+			Authenticator.setDefault(new Authenticator() {
+				@Override
+				public PasswordAuthentication getPasswordAuthentication() {
+					return new PasswordAuthentication("user1", "user1".toCharArray());
+				}
+			});
 
-credential = GoogleCredentials.getApplicationDefault(hf);
-CredentialsProvider credentialsProvider =  new GoogleCredentialsProvider(){
-	public List<String> getScopesToApply(){
-		return Arrays.asList("https://www.googleapis.com/auth/pubsub");
-	   }
-	public Credentials getCredentials()  {
-		return credential;
-       }
-};
+			// The proxy config is for the oauth2 api credentials calls which uses HTTP
+			HttpHost proxy = new HttpHost("127.0.0.1", 3128);
+			DefaultHttpClient httpClient = new DefaultHttpClient();
+			httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
 
-TopicAdminSettings topicAdminSettings =
-     TopicAdminSettings.newBuilder().setCredentialsProvider(credentialsProvider)
-		 .build();
+			httpClient.addRequestInterceptor(new HttpRequestInterceptor() {
+				@Override
+				public void process(org.apache.http.HttpRequest request, HttpContext context)
+						throws HttpException, IOException {
+					if (request.getRequestLine().getMethod().equals("CONNECT"))
+						request.addHeader(new BasicHeader("Proxy-Authorization", "Basic dXNlcjE6dXNlcjE="));
+				}
+			});
 
-TopicAdminClient topicAdminClient =
-     TopicAdminClient.create(topicAdminSettings);
-ProjectName project = ProjectName.create(projectId);
-for (Topic element : topicAdminClient.listTopics(project).iterateAll())
-		System.out.println(element.getName());
+			mHttpTransport = new ApacheHttpTransport(httpClient);
+			HttpTransportFactory hf = new HttpTransportFactory() {
+				@Override
+				public HttpTransport create() {
+					return mHttpTransport;
+				}
+			};
+            credential = GoogleCredentials.getApplicationDefault(hf);
+            
+			TopicAdminSettings topicAdminSettings = TopicAdminSettings.newBuilder()
+					.setCredentialsProvider(FixedCredentialsProvider.create(credential))
+					.build();
+
+
+            TopicAdminClient topicAdminClient =
+                TopicAdminClient.create(topicAdminSettings);
+            ProjectName project = ProjectName.create(projectId);
+            for (Topic element : topicAdminClient.listTopics(project).iterateAll())
+                    System.out.println(element.getName());
 ```
 
 and in the logs, you'll see
