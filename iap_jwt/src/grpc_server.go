@@ -28,6 +28,7 @@ var (
 	serverKey      = flag.String("key", "server_key.pem", "Server TLS key")
 	targetAudience = flag.String("targetAudience", "", "OIDC audience to check")
 	validateToken  = flag.Bool("validateToken", false, "validateToken field")
+	jwtSet         *jwk.Set
 )
 
 const (
@@ -131,7 +132,7 @@ func (s *server) SayHello(ctx context.Context, in *echo.EchoRequest) (*echo.Echo
 func main() {
 
 	flag.Parse()
-
+	var err error
 	lis, err := net.Listen("tcp", *grpcport)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -151,6 +152,11 @@ func main() {
 	if *validateToken {
 		sopts = append(sopts, grpc.UnaryInterceptor(authUnaryInterceptor))
 		sopts = append(sopts)
+	}
+
+	jwtSet, err = jwk.FetchHTTP(jwksURL)
+	if err != nil {
+		log.Fatal("Unable to load JWK Set: ", err)
 	}
 
 	s := grpc.NewServer(sopts...)

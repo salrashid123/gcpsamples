@@ -12,7 +12,9 @@ import (
 	"golang.org/x/net/http2"
 )
 
-var ()
+var (
+	jwtSet *jwk.Set
+)
 
 const (
 	issuer          = "https://cloud.google.com/iap"
@@ -36,17 +38,12 @@ type IAPClaims struct {
 
 func getKey(token *jwt.Token) (interface{}, error) {
 
-	set, err := jwk.FetchHTTP(jwksURL)
-	if err != nil {
-		return nil, err
-	}
-
 	keyID, ok := token.Header["kid"].(string)
 	if !ok {
 		return nil, errors.New("expecting JWT header to have string kid")
 	}
 
-	if key := set.LookupKeyID(keyID); len(key) == 1 {
+	if key := jwtSet.LookupKeyID(keyID); len(key) == 1 {
 		return key[0].Materialize()
 	}
 
@@ -108,8 +105,15 @@ func main() {
 	}
 	http2.ConfigureServer(srv, &http2.Server{})
 
+	/// load and cache the jwk set forever...
+	var err error
+	jwtSet, err = jwk.FetchHTTP(jwksURL)
+	if err != nil {
+		log.Fatal("Unable to load JWK Set: ", err)
+	}
+
 	//err := srv.ListenAndServeTLS("server_crt.pem", "server_key.pem")
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
