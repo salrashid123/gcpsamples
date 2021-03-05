@@ -534,6 +534,74 @@ import (
 	}
 
 ```
+
+##### Adding custom headers
+
+```golang
+package main
+
+
+import (
+  "context"
+  "io/ioutil"
+  "log"
+  "net/http"
+
+  "cloud.google.com/go/storage"
+  "google.golang.org/api/option"
+  raw "google.golang.org/api/storage/v1"
+  htransport "google.golang.org/api/transport/http"
+)
+
+func main() {
+
+  ctx := context.Background()
+
+  // Standard way to initialize client:
+  // client, err := storage.NewClient(ctx)
+  // if err != nil {
+  //      // handle error
+  // }
+
+  // Instead, create a custom http.Client.
+  base := http.DefaultTransport
+  trans, err := htransport.NewTransport(ctx, base, option.WithScopes(raw.DevstorageFullControlScope),
+            option.WithUserAgent("custom-user-agent"))
+  if err != nil {
+            // Handle error.
+  }
+  c := http.Client{Transport:trans}
+
+  // Add RoundTripper to the created HTTP client.
+  c.Transport = withDebugHeader{c.Transport}
+
+  // Supply this client to storage.NewClient
+  client, err := storage.NewClient(ctx, option.WithHTTPClient(&c))
+  if err != nil {
+              // Handle error.
+  }
+
+  // Use client...
+ }
+
+type withDebugHeader struct {
+  rt http.RoundTripper
+}
+
+func (wdh withDebugHeader) RoundTrip(r *http.Request) (*http.Response, error) {
+  headerName := "X-Custom-Header"
+  r.Header.Add(headerName, "value")
+  resp, err := wdh.rt.RoundTrip(r)
+  if err == nil {
+    log.Printf("Resp Header: %+v, ", resp.Header.Get(headerName))
+  } else {
+    log.Printf("Error: %+v", err)
+  }
+  return resp, err
+}
+```
+
+
 ##### Exponential Backoff
 
 Cloud libraries implement backoff automatically per service.
