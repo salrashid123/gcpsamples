@@ -29,5 +29,5 @@ url = blob.generate_signed_url(
     method="GET",
 )
 
-print("Generated PUT signed URL:")
+print("Generated GET signed URL:")
 print(url)

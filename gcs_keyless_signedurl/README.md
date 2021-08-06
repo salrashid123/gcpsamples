@@ -51,7 +51,10 @@ Now modify the sample provide and set it to use the service account to sign as w
 ```
 gcloud compute ssh instance-1
 
-sudo apt-get update && sudo apt-get install python-pip -y && pip install -r requirements.txt
+sudo apt-get update && sudo apt install python3-venv
+python3 -menv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
 
@@ -62,18 +65,12 @@ Now if you invoke the script, the compute engine service account will use the IA
 
 ```
 $ python main.py 
-PUT:
-https://storage.googleapis.com/mineral-minutia-820/somefile.txt?GoogleAccessId=service-account-b@mineral-minutia-820.iam.gserviceaccount.com&Expires=1533318882&Signature=tzLSjAwQKEauSHlQPh/6y6t5iY88AaOch1HNPJCMuPEtD5j7OGLtOxoCAU4dRwxbo/r%2B5p31WTEKePjAYePRBKMLdJz8uFLfoIoGmT5a5CFjyKk0kbsInNij3ZzTHkjcn4NStRJIr2NHYRrRuOiBNMU5qmm6UoH2F/kiO5S87z3oRTqlPs2ESYWissmE/yelthHZVzQLtn0VjvZy%2BXaBv3U0vTh1Cn1dRAscn4jkcqpKRkfFGCdRSS8/8Wi1JdwtXh23bdkvA0SpyQbFxo0chib4353OS/hShXHnDGJ7VsElYnbexfcvDTKmXANp6iIFOGrMykXCzx%2Bxkt3/MouAKg%3D%3D
-put status_code: 200
----------------------------------
-GET
-https://storage.googleapis.com/mineral-minutia-820/somefile.txt?GoogleAccessId=service-account-b@mineral-minutia-820.iam.gserviceaccount.com&Expires=1533318882&Signature=Fk4w48z/yBjhVKDqzVi7URo3EiTTGyZ/9jLjpgwjgaGzWFJvi8hCTz4xXSPUtBHINzAYAQivaUOaD98IjCAZkTngcZ%2BhsYmQVFzsoHkYnvqMAy3ho0avG9/CM/CGvDQ07VZ/CKC9JqDfwil0Z6wR2WaWL7oZ4TfdrpSN07Hu6WlNiB5iiYIZbc4wpGypNFHmB8ujHJAh/VVWFFA0vCY3de54/ay6KQeIvj/0sJW5jXk8HYAZF2cIG4GqtO2CbQwLTJgKuyDgxGZiw3XvwjeU/1kKDDH3HLmaUaZMbBzYkKW3df/775dj0IlxmvK9gKailnOjiX20ZSff7YQFSHqztw%3D%3D
-get status_code: 200
-data; hello world!
+Generated PUT signed URL:
+https://storage.googleapis.com/.....
 ```
 
-If you wantto test this script locally, please use a JSON certificate file that has the same IAM ```TokenCreator``` role on the target service account.
-
+If you wantto test this script locally, please use a JSON certificate file that has the same IAM  Token Creator role on the target service account or grant your 
+cloud SDK user Token Creator role on the target service account.
 
 Note, the following feature requests for the _google-cloud-python_ library could incorporate this whole flow into the library itself so you don't have to do these manual steps
   - https://github.com/GoogleCloudPlatform/google-auth-library-python/issues/50
