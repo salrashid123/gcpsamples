@@ -38,8 +38,8 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 
 public class TestApp {
 
-	private final String keyFile = "/home/srashid/gcp_misc/certs/mineral-minutia-820-83b3ce7dcddb.json";
-	private final String BUCKET_NAME = "mineral-minutia-820";
+	private final String keyFile = "/home/srashid/gcp_misc/certs/your-project-e9a7c8665867.json";
+	private final String BUCKET_NAME = "your-project";
 	private final String BLOB_NAME = "encrypted.txt";
 	
 

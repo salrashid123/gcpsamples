@@ -44,8 +44,8 @@ namespace Oauth2Harness
             }
             */
             
-            string clientId = "YOUR_CLIENT_ID";
-            string clientSecret = "YOUR_CLIENT_SECRET";
+            string clientId = "CLIENT_ID";
+            string clientSecret = "CLIENT_SECRET";
             credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(new ClientSecrets { ClientId = clientId, ClientSecret = clientSecret },
                 new[] { Oauth2Service.Scope.UserinfoEmail }, Environment.UserName, CancellationToken.None);
             Console.WriteLine("Credential file saved at: " + Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));

@@ -7,14 +7,14 @@ from apiclient.discovery import build
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
 
-flow  = flow_from_clientsecrets('client_secrets.json',
+flow  = flow_from_clientsecrets('/tmp/client_secrets.json',
                                scope='https://www.googleapis.com/auth/userinfo.email',
                                redirect_uri='urn:ietf:wg:oauth:2.0:oob')
 
 auth_uri = flow.step1_get_authorize_url()
-print 'goto the following url ' +  auth_uri
+print('goto the following url ' +  auth_uri)
 
-code = raw_input('Enter token:')
+code = input('Enter token:')
 credentials = flow.step2_exchange(code)
 
 http = credentials.authorize(httplib2.Http())
@@ -22,7 +22,7 @@ storage = Storage('user_creds.json')
 storage.put(credentials)
 service = build(serviceName='oauth2', version= 'v2',http=http)
 resp = service.userinfo().get().execute()
-print resp['email']
+print(resp['email'])
 
 
 # -------------------------------------

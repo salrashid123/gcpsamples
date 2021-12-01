@@ -25,12 +25,19 @@ Substitute the key,secret into the sample (make sure you have access to the buck
 ```
 $ python hmac_sign.py 
 PUT:
-https://storage.googleapis.com/mineral-minutia-820/somefile.txt?GoogleAccessId=GOOGE6ESAVCTDYJSGKXMQK6M&Expires=1533332885&Signature=2wEIAHhvQFeKSeUmM/X6uF2Ge%2Bk%3D
+https://storage.googleapis.com/your-project/somefile.txt?GoogleAccessId=GOOGE6ESAVCTDYJSGKXMQK6M&Expires=1533332885&Signature=2wEIAHhvQFeKSeUmM/X6uF2Ge%2Bk%3D
 put status_code: 200
 data: 
 ---------------------------------
 GET
-https://storage.googleapis.com/mineral-minutia-820/somefile.txt?GoogleAccessId=GOOGE6ESAVCTDYJSGKXMQK6M&Expires=1533332885&Signature=e1ySGToX41gXS%2BdwUw0x2glM4uI%3D
+https://storage.googleapis.com/your-project/somefile.txt?GoogleAccessId=GOOGE6ESAVCTDYJSGKXMQK6M&Expires=1533332885&Signature=e1ySGToX41gXS%2BdwUw0x2glM4uI%3D
 get status_code: 200
 data; lorem ipsum
 ```
+
+
+---
+
+Just as a side note, you can also embed the HMAC key into a Trusted Platform Module similar to the AWS singer here
+
+- [AWS v4 Signer for embedding Access Secrets to PKCS11 and TPMs](https://github.com/salrashid123/aws_hmac)

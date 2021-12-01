@@ -5,7 +5,7 @@ go 1.13
 require (
 	echo v0.0.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/golang-jwt/jwt
 
 	github.com/google/go-tpm v0.2.0 // indirect
 	github.com/googleapis/gax-go v2.0.2+incompatible // indirect

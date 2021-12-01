@@ -75,8 +75,8 @@ In the end, you should see the objet you just created in GCS with the specific f
 
 
 ```
-$ gsutil stat gs://mineral-minutia-820/encrypted.txt
-gs://mineral-minutia-820/encrypted.txt:
+$ gsutil stat gs://your-project/encrypted.txt
+gs://your-project/encrypted.txt:
     Creation time:          Mon, 09 Jul 2018 15:43:29 GMT
     Update time:            Mon, 09 Jul 2018 15:43:29 GMT
     Storage class:          STANDARD
@@ -124,10 +124,10 @@ curl -v \
     -H "x-goog-encryption-key:Tsw3RFJyxkQmnlq8vM25jkgZWE5OoHDI5kLKr67S6i8=" \
     -H "x-goog-encryption-key-sha256:WsFuURsydzY2WBItGv2P2HTfNDvEgV262XyTUanRqYY=" \
     -H "x-goog-meta-icecreamflavor:vanilla" \
-    -X PUT "https://storage.googleapis.com/mineral-minutia-820/encrypted.txt?GoogleAccessId=svc-2-429@mineral-minutia-820.iam.gserviceaccount.com&Expires=1532323673&Signature=xSwnQR21YoIW64ZZw998Q1UZbYGW8FWEpNqpT2UeIDRA4thQq3erpfn%2FvhIaVCzgUeXd0eTH7dz85GJ40FPlxh%2Fx9KXBE1rx2riPG8Cmel9CeW0P4TrUgZ21%2BozfSPCQ%2BwZNPVOrGg%2FAYvLO5IR9esDKsIiQquNrru1TnDJTsREcIEgjxLi4zEuejd%2FaWSIIMGb%2BKimAmWvzt8Bvtk4bsKQRWfvvBerttr2bpXt624VbRGHsuT2JOQqlzM%2F7JwnTJOb42Bb6UQ8GMxvt41Ow2jYA9gTnqgeR5OKuHaaIiNTZM2StnmSfdweJTtupZ19LycTafdpkbw%2BxWq9ablahblah"  \
+    -X PUT "https://storage.googleapis.com/your-project/encrypted.txt?GoogleAccessId=svc-2-429@your-project.iam.gserviceaccount.com&Expires=1532323673&Signature=xSwnQR21YoIW64ZZw998Q1UZbYGW8FWEpNqpT2UeIDRA4thQq3erpfn%2FvhIaVCzgUeXd0eTH7dz85GJ40FPlxh%2Fx9KXBE1rx2riPG8Cmel9CeW0P4TrUgZ21%2BozfSPCQ%2BwZNPVOrGg%2FAYvLO5IR9esDKsIiQquNrru1TnDJTsREcIEgjxLi4zEuejd%2FaWSIIMGb%2BKimAmWvzt8Bvtk4bsKQRWfvvBerttr2bpXt624VbRGHsuT2JOQqlzM%2F7JwnTJOb42Bb6UQ8GMxvt41Ow2jYA9gTnqgeR5OKuHaaIiNTZM2StnmSfdweJTtupZ19LycTafdpkbw%2BxWq9ablahblah"  \
     --upload-file encrypted.txt
 
-> PUT /mineral-minutia-820/encrypted.txt?GoogleAccessId=svc-2-429@mineral-minutia-820.iam.gserviceaccount.com&Expires=1532323673&Signature=xSwnQR21YoIW64ZZw998Q1UZbYGW8FWEpNqpT2UeIDRA4thQq3erpfn%2FvhIaVCzgUeXd0eTH7dz85GJ40FPlxh%2Fx9KXBE1rx2riPG8Cmel9CeW0P4TrUgZ21%2BozfSPCQ%2BwZNPVOrGg%2FAYvLO5IR9esDKsIiQquNrru1TnDJTsREcIEgjxLi4zEuejd%2FaWSIIMGb%2BKimAmWvzt8Bvtk4bsKQRWfvvBerttr2bpXt624VbRGHsuT2JOQqlzM%2F7JwnTJOb42Bb6UQ8GMxvt41Ow2jYA9gTnqgeR5OKuHaaIiNTZM2StnmSfdweJTtupZ19LycTafdpkbw%2Bblahblah HTTP/2
+> PUT /your-project/encrypted.txt?GoogleAccessId=svc-2-429@your-project.iam.gserviceaccount.com&Expires=1532323673&Signature=xSwnQR21YoIW64ZZw998Q1UZbYGW8FWEpNqpT2UeIDRA4thQq3erpfn%2FvhIaVCzgUeXd0eTH7dz85GJ40FPlxh%2Fx9KXBE1rx2riPG8Cmel9CeW0P4TrUgZ21%2BozfSPCQ%2BwZNPVOrGg%2FAYvLO5IR9esDKsIiQquNrru1TnDJTsREcIEgjxLi4zEuejd%2FaWSIIMGb%2BKimAmWvzt8Bvtk4bsKQRWfvvBerttr2bpXt624VbRGHsuT2JOQqlzM%2F7JwnTJOb42Bb6UQ8GMxvt41Ow2jYA9gTnqgeR5OKuHaaIiNTZM2StnmSfdweJTtupZ19LycTafdpkbw%2Bblahblah HTTP/2
 > Host: storage.googleapis.com
 > User-Agent: curl/7.60.0
 > Accept: */*
@@ -164,5 +164,5 @@ If you enable [GCS Access Logs](https://cloud.google.com/storage/docs/access-log
 ```
 "time_micros","c_ip","c_ip_type","c_ip_region","cs_method","cs_uri","sc_status","cs_bytes","sc_bytes","time_taken_micros","cs_host","cs_referer","cs_user_agent","s_request_id","cs_operation","cs_bucket","cs_object"
 
-"1531116650186616","73.162.112.208","1","","PUT","/mineral-minutia-820/encrypted.txt?GoogleAccessId=svc-2-429@mineral-minutia-820.iam.gserviceaccount.com&Expires=1532326249&Signature=xSwnQR21YoIW64ZZw998Q1UZbYGW8FWEpNqpT2UeIDRA4thQq3erpfn%2FvhIaVCzgUeXd0eTH7dz85GJ40FPlxh%2Fx9KXBE1rx2riPG8Cmel9CeW0P4TrUgZ21%2BozfSPCQ%2BwZNPVOrGg%2FAYvLO5IR9esDKsIiQquNrru1TnDJTsREcIEgjxLi4zEuejd%2FaWSIIMGb%2BKimAmWvzt8Bvtk4bsKQRWfvvBerttr2bpXt624VbRGHsuT2JOQqlzM%2F7JwnTJOb42Bb6UQ8GMxvt41Ow2jYA9gTnqgeR5OKuHaaIiNTZM2StnmSfdweJTtupZ19LycTafdpkbw%2Bblahblah","200","11","0","260000","storage.googleapis.com","","Java/1.8.0_171,gzip(gfe)","AEnB2Ur-cd5eccmHZ0YLGL0ivysV7C1AOQfHyuGEYgOtLO_E3JEnAZmmxCyrvwIvcYVp6-rYkLY1JyFTyg6HLsPjjTQUcmSX6w","PUT_Object","mineral-minutia-820","encrypted.txt"
+"1531116650186616","73.162.112.208","1","","PUT","/your-project/encrypted.txt?GoogleAccessId=svc-2-429@your-project.iam.gserviceaccount.com&Expires=1532326249&Signature=xSwnQR21YoIW64ZZw998Q1UZbYGW8FWEpNqpT2UeIDRA4thQq3erpfn%2FvhIaVCzgUeXd0eTH7dz85GJ40FPlxh%2Fx9KXBE1rx2riPG8Cmel9CeW0P4TrUgZ21%2BozfSPCQ%2BwZNPVOrGg%2FAYvLO5IR9esDKsIiQquNrru1TnDJTsREcIEgjxLi4zEuejd%2FaWSIIMGb%2BKimAmWvzt8Bvtk4bsKQRWfvvBerttr2bpXt624VbRGHsuT2JOQqlzM%2F7JwnTJOb42Bb6UQ8GMxvt41Ow2jYA9gTnqgeR5OKuHaaIiNTZM2StnmSfdweJTtupZ19LycTafdpkbw%2Bblahblah","200","11","0","260000","storage.googleapis.com","","Java/1.8.0_171,gzip(gfe)","AEnB2Ur-cd5eccmHZ0YLGL0ivysV7C1AOQfHyuGEYgOtLO_E3JEnAZmmxCyrvwIvcYVp6-rYkLY1JyFTyg6HLsPjjTQUcmSX6w","PUT_Object","your-project","encrypted.txt"
 ```

@@ -20,279 +20,480 @@ The recommended library set to use is the idiomatic "Cloud Client Library" which
 One other complication to account for is that the authentication step (i.,e getting a GoogleCredential()) uses HTTP even if the underlying RPC is using gRPC.  For example, with java, you have to account for the credential via HTTP and the rpc call via gRPC.
 
 
+The following lists the tests i ran using a squid proxy below.   Each tests verifies two modes of for the proxy
+
+
+1. Proxy without authentication
+2. Proxy that requires basic authentication
+
+
+within those, i tested Application Default Credentials while a user was active and ADC when an service account was active
+
+
+
+As you'll see, some languages uses the proxy for all traffic, some partial traffic (ie., auth or GCS is omitted), while some reuire a lot of fiddling
+
+The outcome of each test and permutation is described in the comments in code
+
+>my ask: If you have any updates or fixes, please file an bug or better yet, a PR.
+
 # Python
 
-## Cloud Client Library    ([google-cloud-python](https://github.com/GoogleCloudPlatform/google-cloud-python))
-
-### HTTP
-
-The GCS and BQ libraries currently use HTTP Transports.  To enable proxy support, use the env_variable:
-
-```
-export  https_proxy=http://user1:user1@127.0.0.1:3128
-```
-
-Once that is set, the sample application will contact the proxy for both the authentication and api call:
 
 ```python
-from google.cloud import storage
+#!/usr/bin/python
 
-client = storage.Client(project="your_project")
+
+# 1. user auth
+#    export http_proxy=http://localhost:3128
+#    auth N
+#    gcs N
+#    pubub Y
+
+#    1638366068.078    261 192.168.9.1 TCP_TUNNEL/200 7876 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/142.250.73.202 -
+
+# 2. user auth
+#    export https_proxy=http://localhost:3128
+#    auth Y
+#    gcs Y
+#    pubub Y
+
+   # 1638366275.669    367 192.168.9.1 TCP_TUNNEL/200 7876 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/142.250.73.202 -
+   # 1638366275.669    324 192.168.9.1 TCP_TUNNEL/200 7183 CONNECT oauth2.googleapis.com:443 - HIER_DIRECT/142.250.73.234 -
+   # 1638366275.692   1147 192.168.9.1 TCP_TUNNEL/200 34961 CONNECT storage.googleapis.com:443 - HIER_DIRECT/142.250.81.208 -
+   # 1638366275.692   1219 192.168.9.1 TCP_TUNNEL/200 7030 CONNECT oauth2.googleapis.com:443 - HIER_DIRECT/142.250.73.234 -
+
+
+# 3.  service account
+#    export https_proxy=http://localhost:3128
+#    auth Y
+#    gcs Y
+#    pubub Y
+
+   # 1638366614.398    201 192.168.9.1 TCP_TUNNEL/200 7838 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/142.251.33.202 -
+   # 1638366614.418    643 192.168.9.1 TCP_TUNNEL/200 6418 CONNECT oauth2.googleapis.com:443 - HIER_DIRECT/172.217.1.202 -
+   # 1638366614.418    563 192.168.9.1 TCP_TUNNEL/200 34953 CONNECT storage.googleapis.com:443 - HIER_DIRECT/142.250.81.208 -
+
+
+# 4. basic + user auth
+# export https_proxy=http://user1:user1@localhost:3128
+#    auth Y
+#    gcs Y
+#    pubub Y
+   # 1638366799.680    438 192.168.9.1 TCP_TUNNEL/200 7877 CONNECT pubsub.googleapis.com:443 user1 HIER_DIRECT/142.251.33.202 -
+   # 1638366799.680    404 192.168.9.1 TCP_TUNNEL/200 7010 CONNECT oauth2.googleapis.com:443 user1 HIER_DIRECT/142.250.188.42 -
+   # 1638366799.701   1450 192.168.9.1 TCP_TUNNEL/200 34954 CONNECT storage.googleapis.com:443 user1 HIER_DIRECT/142.250.81.208 -
+   # 1638366799.701   1549 192.168.9.1 TCP_TUNNEL/200 7155 CONNECT oauth2.googleapis.com:443 user1 HIER_DIRECT/142.250.188.42 -
+
+# 5.  basic +service account
+# export https_proxy=http://user1:user1@localhost:3128
+#    auth Y
+#    gcs Y
+#    pubub Y
+# 1638366879.245    284 192.168.9.1 TCP_TUNNEL/200 7877 CONNECT pubsub.googleapis.com:443 user1 HIER_DIRECT/142.251.33.202 -
+# 1638366879.264    582 192.168.9.1 TCP_TUNNEL/200 6408 CONNECT oauth2.googleapis.com:443 user1 HIER_DIRECT/142.250.188.42 -
+# 1638366879.264    541 192.168.9.1 TCP_TUNNEL/200 34953 CONNECT storage.googleapis.com:443 user1 HIER_DIRECT/142.250.81.208 -
+
+
+project='your-project'
+
+from google.cloud import storage
+client = storage.Client(project=project)
 for b in client.list_buckets():
    print(b.name)
-```
 
-Meaning in the proxy access logs, you would see:
-```
-1506979122.959   1516 172.17.0.1 TCP_MISS/200 5384 CONNECT accounts.google.com:443 - HIER_DIRECT/172.217.27.237 -
-1506979122.959    741 172.17.0.1 TCP_MISS/200 11476 CONNECT www.googleapis.com:443 - HIER_DIRECT/172.217.31.42 -
-```
-
-### GRPC
-
-The PubSub library uses gRPC so you need to enable _both_ environment variables:
-```
-export http_proxy=http://localhost:3128
-export https_proxy=http://localhost:3128
-```
-
-Then with the sample API call for pubsub:
-
-```python
-from google.cloud import pubsub
-
-client = pubsub.PublisherClient()
-project_path = client.project_path('your_project')
-for topic in client.list_topics(project_path):
+from google.cloud import pubsub_v1
+publisher = pubsub_v1.PublisherClient()
+project_path = f"projects/{project}"
+for topic in publisher.list_topics(request={"project": project_path}):
   print(topic)
 ```
-
-Once the environment variables are set, you will see the authentication and PubSub RPC call in the squid proxy access logs (described below)
-```
-1506979250.018   1870 172.17.0.1 TCP_MISS/200 5134 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/172.217.26.138 -
-1506979250.021   1768 172.17.0.1 TCP_MISS/200 5438 CONNECT accounts.google.com:443 - HIER_DIRECT/172.217.27.237 -
-```
-
->> Note:
-http\_proxy= variable only passes through the API call via the proxy while https\_proxy covers the authentication call.
-Which means you need to set both environment variables.
 
 
 # JAVA [google-cloud-java](https://github.com/GoogleCloudPlatform/google-cloud-python)
 
-For java, you can set the well known environment variables as described here:
+```java
+package com.test;
 
-[https://github.com/GoogleCloudPlatform/google-cloud-java#using-a-proxy](https://github.com/GoogleCloudPlatform/google-cloud-java#using-a-proxy)
+import java.io.IOException;
+import java.net.Authenticator;
+import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.SocketAddress;
 
+import com.google.api.client.http.HttpTransport;
+//import com.google.api.client.http.apache.ApacheHttpTransport;
+import com.google.api.client.http.apache.v2.ApacheHttpTransport;
+import com.google.api.core.ApiFunction;
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.auth.http.HttpTransportFactory;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.TransportOptions;
+import com.google.cloud.http.HttpTransportOptions;
+import com.google.cloud.pubsub.v1.TopicAdminClient;
+import com.google.cloud.pubsub.v1.TopicAdminClient.ListTopicsPagedResponse;
+import com.google.cloud.pubsub.v1.TopicAdminSettings;
+import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
+import com.google.pubsub.v1.ListTopicsRequest;
+import com.google.pubsub.v1.ProjectName;
+import com.google.pubsub.v1.Topic;
 
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.ProxyAuthenticationStrategy;
+import org.w3c.dom.UserDataHandler;
 
-## HTTP
+import io.grpc.HttpConnectProxiedSocketAddress;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.ProxiedSocketAddress;
+import io.grpc.ProxyDetector;
 
-For HTTP-only requests, there are several options depending on your needs,
+/*
 
-### Default proxy
+1. user
 
-The following env variables will force all calls via the proxy
+mvn -DproxySet=true -Dhttp.proxyHost=localhost -Dhttp.proxyPort=3128 clean install exec:java -q
+
+auth N
+pubsub N
+gcs N
+1638367655.406      1 192.168.9.1 TCP_MISS/503 4414 GET http://metadata.google.internal/computeMetadata/v1/project/project-id - HIER_NONE/- text/html
+
+2. user
+
+mvn -DproxySet=true -Dhttps.proxyHost=localhost -Dhttps.proxyPort=3128 clean install exec:java -q
+
+auth Y
+pubub Y
+gcs Y
+
+1638367713.920   2290 192.168.9.1 TCP_TUNNEL/200 7008 CONNECT oauth2.googleapis.com:443 - HIER_DIRECT/172.217.9.202 -
+1638367713.920   2073 192.168.9.1 TCP_TUNNEL/200 162229 CONNECT storage.googleapis.com:443 - HIER_DIRECT/142.250.188.48 -
+1638367713.920    808 192.168.9.1 TCP_TUNNEL/200 7826 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/142.251.33.202 -
+
+3. service account
+
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/svc.json
+
+auth N
+pubsub N
+gcs N
+1638367846.791      8 192.168.9.1 TCP_MISS/503 4414 GET http://metadata.google.internal/computeMetadata/v1/project/project-id - HIER_NONE/- text/html
+
+4. service account
+  mvn -DproxySet=true -Dhttps.proxyHost=localhost -Dhttps.proxyPort=3128 clean install exec:java -q
+
+auth Y
+pubsub Y
+gcs Y
+
+1638367902.271   2702 192.168.9.1 TCP_TUNNEL/200 6328 CONNECT oauth2.googleapis.com:443 - HIER_DIRECT/172.217.15.106 -
+1638367902.271   2234 192.168.9.1 TCP_TUNNEL/200 162251 CONNECT storage.googleapis.com:443 - HIER_DIRECT/142.250.188.48 -
+1638367902.271    844 192.168.9.1 TCP_TUNNEL/200 7826 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/142.251.33.202 -
+
+5.  any cred
+
+mvn -DproxySet=true -Dhttps.proxyUser=user1 -Dhttps.proxyPassword=user1 -Dhttps.proxyHost=localhost -Dhttps.proxyPort=3128 clean install exec:java -q
+
+auth N
+pubsub N
+gcs N
+
+1638368288.849      0 192.168.9.1 TCP_DENIED/407 4105 CONNECT oauth2.googleapis.com:443 - HIER_NONE/- text/html
+
+*/
+
+public class TestApp {
+	public static void main(String[] args) {
+		TestApp tc = new TestApp();
+	}
+
+	private ApacheHttpTransport mHttpTransport;
+	private GoogleCredentials credential;
+
+	public TestApp() {
+		try {
+
+			credential = GoogleCredentials.getApplicationDefault();
+			Storage storage_service = StorageOptions.newBuilder()
+					.build()
+					.getService();
+			for (Bucket b : storage_service.list().iterateAll()) {
+				System.out.println(b);
+			}
+
+			GoogleCredentials creds = GoogleCredentials.getApplicationDefault();
+			FixedCredentialsProvider credentialsProvider = FixedCredentialsProvider.create(creds);
+
+			TopicAdminClient topicClient = TopicAdminClient.create(
+					TopicAdminSettings.newBuilder()
+							.setCredentialsProvider(credentialsProvider)
+							.build());
+
+			ListTopicsRequest listTopicsRequest = ListTopicsRequest.newBuilder()
+					.setProject(ProjectName.format("your-project"))
+					.build();
+			ListTopicsPagedResponse response = topicClient.listTopics(listTopicsRequest);
+			Iterable<Topic> topics = response.iterateAll();
+			for (Topic topic : topics)
+				System.out.println(topic);
+
+		} catch (Exception ex) {
+			System.out.println("Error:  " + ex);
+		}
+	}
+
+}
+```
+
 
 ```java
-System.setProperty("https.proxyHost", "localhost");
-System.setProperty("https.proxyPort", "3128");
-```
+package com.test;
 
-### Default proxy with Basic Authenticator
+import java.io.IOException;
+import java.net.Authenticator;
+import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.SocketAddress;
 
-If your proxy requires BASIC auth, you may want to use an
-[Authenticator](https://docs.oracle.com/javase/7/docs/api/java/net/Authenticator.html) to handle proxy negotiations.
+import com.google.api.client.http.HttpTransport;
+//import com.google.api.client.http.apache.ApacheHttpTransport;
+import com.google.api.client.http.apache.v2.ApacheHttpTransport;
+import com.google.api.core.ApiFunction;
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.rpc.TransportChannelProvider;
+import com.google.auth.http.HttpTransportFactory;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.TransportOptions;
+import com.google.cloud.http.HttpTransportOptions;
+import com.google.cloud.pubsub.v1.TopicAdminClient;
+import com.google.cloud.pubsub.v1.TopicAdminClient.ListTopicsPagedResponse;
+import com.google.cloud.pubsub.v1.TopicAdminSettings;
+import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
+import com.google.pubsub.v1.ListTopicsRequest;
+import com.google.pubsub.v1.ProjectName;
+import com.google.pubsub.v1.Topic;
 
-```java
-System.setProperty("https.proxyHost", "localhost");
-System.setProperty("https.proxyPort", "3128");
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.ProxyAuthenticationStrategy;
+import org.w3c.dom.UserDataHandler;
 
-Authenticator.setDefault(
-    new Authenticator() {
-    @Override
-    public PasswordAuthentication getPasswordAuthentication() {
-        return new PasswordAuthentication(
-                "user1", "user1".toCharArray());
-    }
-    }
-);
-```
-
-### ApacheHttpTransport
-
- [ApacheHttpTransport()](https://developers.google.com/api-client-library/java/google-http-java-client/reference/1.20.0/com/google/api/client/http/apache/ApacheHttpTransport) provides an override mechanism to set custom headers which you can use later.
-What this allows users to do is to set custom Proxy-Authorization:  or even Basic as shown below
-
-The following shows overrides the transport
-
-```java
-JacksonFactory jsonFactory = new JacksonFactory();
-
-HttpHost proxy = new HttpHost("127.0.0.1",3128);
-DefaultHttpClient httpClient = new DefaultHttpClient();
-httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
-
-httpClient.addRequestInterceptor(new HttpRequestInterceptor(){            
-    @Override
-    public void process(org.apache.http.HttpRequest request, HttpContext context) throws HttpException, IOException {
-            if (request.getRequestLine().getMethod().equals("CONNECT"))                 
-               request.addHeader(new BasicHeader("Proxy-Authorization","Basic dXNlcjE6dXNlcjE="));
-        }
-    });
-
-mHttpTransport =  new ApacheHttpTransport(httpClient);
-```
-
-#### For Proxy-Authentication:  Basic with GoogleAPIs
-
-You can then use the transport in even in Traditional GoogleAPIs or with the Cloud libraries.
-
-With GoogleAPIs, you can simply set the ```https.proxyHost`` env variable set or use the full override as shown below:
-
-```java
-com.google.api.client.googleapis.auth.oauth2.GoogleCredential credential = com.google.api.client.googleapis.auth.oauth2.GoogleCredential.getApplicationDefault(mHttpTransport,jsonFactory);
-if (credential.createScopedRequired())
-    credential = credential.createScoped(Arrays.asList(StorageScopes.DEVSTORAGE_READ_ONLY));
-
-com.google.api.services.storage.Storage service = new com.google.api.services.storage.Storage.Builder(mHttpTransport, jsonFactory, credential)
-                .setApplicationName("oauth client")   
-                .build();
-```
-
-#### For Proxy-Authentication:  Basic with Google Cloud Client Libraries
-
-For Google Client Libraries that use HTTP, the you can also use the env variables or the full transport override:
-
-```java
-
-HttpTransportFactory hf = new HttpTransportFactory(){
-    @Override
-    public HttpTransport create() {
-        return mHttpTransport;
-    }
-};            
-
-com.google.auth.oauth2.GoogleCredentials credential = com.google.auth.oauth2.GoogleCredentials.getApplicationDefault(hf);
-    if (credential.createScopedRequired())
-       credential = credential.createScoped(Arrays.asList("https://www.googleapis.com/auth/devstorage.read_write"));
-
-TransportOptions options = HttpTransportOptions.newBuilder().setHttpTransportFactory(hf).build();            
-com.google.cloud.storage.Storage storage = com.google.cloud.storage.StorageOptions.newBuilder()
-    .setCredentials(credential)
-    .setProjectId("your_project")
-    .setTransportOptions(options)
-    .build().getService();
-```
-
-both would show the following in the proxy access logs which indicates the authentication and API calls to GCS
-
-```
-1507030386.785   2871 172.17.0.1 TCP_MISS/200 5380 CONNECT accounts.google.com:443 user1 HIER_DIRECT/172.217.24.173 -
-1507030388.004   1219 172.17.0.1 TCP_MISS/200 51450 CONNECT www.googleapis.com:443 user1 HIER_DIRECT/74.125.68.95 -
-```
+import io.grpc.HttpConnectProxiedSocketAddress;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.ProxiedSocketAddress;
+import io.grpc.ProxyDetector;
 
 
-## GRPC
+/*
 
-Java GRPC uses java `java.net.Authenticator.` which you can use to set a username/password for a custom  `Proxy-Authorization`
+unsure why the first set is denied
 
-eg, in the snippet below, the proxy headers will be `user1/user`:
+1.user
+  mvn clean install exec:java -q
 
-```java
-System.setProperty("https.proxyHost", "localhost");
-System.setProperty("https.proxyPort", "3128");
+auth Y
+gcs Y
+pubsub Y
 
-Authenticator.setDefault(
-    new Authenticator() {
-    @Override
-    public PasswordAuthentication getPasswordAuthentication() {
-        return new PasswordAuthentication(
-                "user1", "user1".toCharArray());
-    }
-    }
-);
-```
 
-then set the ```https.proxyHost=, https.proxyPort=``` env variables or use a GoogleCredential that is  configured to use the proxy.
+1638368638.824      0 192.168.9.1 TCP_DENIED/407 4000 CONNECT oauth2.googleapis.com:443 - HIER_NONE/- text/html
+1638368639.059      0 192.168.9.1 TCP_DENIED/407 4004 CONNECT storage.googleapis.com:443 - HIER_NONE/- text/html
+1638368640.852   1792 192.168.9.1 TCP_TUNNEL/200 162251 CONNECT storage.googleapis.com:443 user1 HIER_DIRECT/142.250.81.208 -
+1638368640.852    711 192.168.9.1 TCP_TUNNEL/200 7827 CONNECT pubsub.googleapis.com:443 user1 HIER_DIRECT/142.251.33.202 -
+1638368640.853   2021 192.168.9.1 TCP_TUNNEL/200 7064 CONNECT oauth2.googleapis.com:443 user1 HIER_DIRECT/172.217.9.202 -
 
-So if you want both the HTTP-based Credentials API call to oauth2 **and** grpc via the proxy, 
+2. service account
+ mvn clean install exec:java -q
 
-```java
-			// The authenticator is for gRPC
-			Authenticator.setDefault(new Authenticator() {
-				@Override
-				public PasswordAuthentication getPasswordAuthentication() {
-					return new PasswordAuthentication("user1", "user1".toCharArray());
-				}
-			});
+auth Y
+gcs Y
+pubsub Y
 
-			// The proxy config is for the oauth2 api credentials calls which uses HTTP
+
+1638368545.910      0 192.168.9.1 TCP_DENIED/407 4000 CONNECT oauth2.googleapis.com:443 - HIER_NONE/- text/html
+1638368546.080      0 192.168.9.1 TCP_DENIED/407 4004 CONNECT storage.googleapis.com:443 - HIER_NONE/- text/html
+1638368547.913   1996 192.168.9.1 TCP_TUNNEL/200 6282 CONNECT oauth2.googleapis.com:443 user1 HIER_DIRECT/172.217.9.202 -
+1638368547.913   1832 192.168.9.1 TCP_TUNNEL/200 162251 CONNECT storage.googleapis.com:443 user1 HIER_DIRECT/142.250.81.208 -
+1638368547.913    763 192.168.9.1 TCP_TUNNEL/200 7826 CONNECT pubsub.googleapis.com:443 user1 HIER_DIRECT/142.251.33.202 -
+
+*/
+
+
+public class TestApp {
+	public static void main(String[] args) {
+		TestApp tc = new TestApp();
+	}
+
+	private ApacheHttpTransport mHttpTransport;
+	private GoogleCredentials credential;
+
+	public TestApp() {
+		try {
+
 			HttpHost proxy = new HttpHost("127.0.0.1", 3128);
-			DefaultHttpClient httpClient = new DefaultHttpClient();
-			httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
 
-			httpClient.addRequestInterceptor(new HttpRequestInterceptor() {
-				@Override
-				public void process(org.apache.http.HttpRequest request, HttpContext context)
-						throws HttpException, IOException {
-					if (request.getRequestLine().getMethod().equals("CONNECT"))
-						request.addHeader(new BasicHeader("Proxy-Authorization", "Basic dXNlcjE6dXNlcjE="));
-				}
-			});
+			org.apache.http.client.CredentialsProvider credsProvider = new BasicCredentialsProvider();
+			credsProvider.setCredentials(
+					new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
+					new UsernamePasswordCredentials("user1", "user1"));
+			HttpClientBuilder clientBuilder = HttpClientBuilder.create();
+
+			clientBuilder.useSystemProperties();
+			clientBuilder.setProxy(proxy);
+			clientBuilder.setDefaultCredentialsProvider(credsProvider);
+			clientBuilder.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
+
+			CloseableHttpClient httpClient = clientBuilder.build();
 
 			mHttpTransport = new ApacheHttpTransport(httpClient);
+
 			HttpTransportFactory hf = new HttpTransportFactory() {
 				@Override
 				public HttpTransport create() {
 					return mHttpTransport;
 				}
 			};
-            credential = GoogleCredentials.getApplicationDefault(hf);
-            
-			TopicAdminSettings topicAdminSettings = TopicAdminSettings.newBuilder()
-					.setCredentialsProvider(FixedCredentialsProvider.create(credential))
+
+			credential = GoogleCredentials.getApplicationDefault(hf);
+
+			TransportOptions options = HttpTransportOptions.newBuilder().setHttpTransportFactory(hf).build();
+			Storage storage_service = StorageOptions.newBuilder().setCredentials(credential)
+					.setTransportOptions(options)
+					.build()
+					.getService();
+			for (Bucket b : storage_service.list().iterateAll()) {
+				System.out.println(b);
+			}
+
+			GoogleCredentials creds = GoogleCredentials.getApplicationDefault();
+			FixedCredentialsProvider credentialsProvider = FixedCredentialsProvider.create(creds);
+
+			TransportChannelProvider channelProvider = TopicAdminSettings.defaultGrpcTransportProviderBuilder()
+					.setChannelConfigurator(new ApiFunction<ManagedChannelBuilder, ManagedChannelBuilder>() {
+						@Override
+						public ManagedChannelBuilder apply(ManagedChannelBuilder managedChannelBuilder) {
+							return managedChannelBuilder.proxyDetector(
+									new ProxyDetector() {
+										@Override
+										public ProxiedSocketAddress proxyFor(SocketAddress socketAddress)
+												throws IOException {
+											return HttpConnectProxiedSocketAddress.newBuilder()
+													.setUsername("user1")
+													.setPassword("user1")
+													.setProxyAddress(new InetSocketAddress("localhost", 3128))
+													.setTargetAddress((InetSocketAddress) socketAddress)
+													.build();
+										}
+									});
+						}
+					})
 					.build();
 
+			TopicAdminClient topicClient = TopicAdminClient.create(
+					TopicAdminSettings.newBuilder()
+							.setTransportChannelProvider(channelProvider)
+							.setCredentialsProvider(credentialsProvider)
+							.build());
 
-            TopicAdminClient topicAdminClient =
-                TopicAdminClient.create(topicAdminSettings);
-            ProjectName project = ProjectName.create(projectId);
-            for (Topic element : topicAdminClient.listTopics(project).iterateAll())
-                    System.out.println(element.getName());
-```
+			ListTopicsRequest listTopicsRequest = ListTopicsRequest.newBuilder()
+					.setProject(ProjectName.format("your-project"))
+					.build();
+			ListTopicsPagedResponse response = topicClient.listTopics(listTopicsRequest);
+			Iterable<Topic> topics = response.iterateAll();
+			for (Topic topic : topics)
+				System.out.println(topic);
 
-and in the logs, you'll see
-```
-1507073510.386   5108 172.17.0.1 TCP_MISS/200 5466 CONNECT accounts.google.com:443 - HIER_DIRECT/216.58.203.77 -
-1507073510.386   5758 172.17.0.1 TCP_MISS/200 4438 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/172.217.27.234 -
+		} catch (Exception ex) {
+			System.out.println("Error:  " + ex);
+		}
+	}
+
+}
 ```
 
 # golang [google-cloud-go](https://github.com/GoogleCloudPlatform/google-cloud-go)
 
-GO also uses the standard environment variable to use the proxy:
 
-```
-export https_proxy=http://127.0.0.1:3128
-```
-
-So the following golang app will proxy both auth traffic for GCS and PubSub through:
+### Forward
 
 ```golang
+package main
+
 import (
 	"log"
 
-	"cloud.google.com/go/storage"
 	"cloud.google.com/go/pubsub"
+	"cloud.google.com/go/storage"
 	"golang.org/x/net/context"
 	"google.golang.org/api/iterator"
 )
 
-const (
-  projectID = "your_project"
-)
+/*
 
+1. user auth
+   export http_proxy=http://localhost:3128
+
+   no traffic
+
+2. user auth
+    export https_proxy=http://localhost:3128
+
+	pubsub Y
+	auth Y
+	gcs Y
+
+	1638363908.054   1043 192.168.9.1 TCP_TUNNEL/200 7779 CONNECT oauth2.googleapis.com:443 - HIER_DIRECT/172.217.15.74 -
+	1638363908.054    930 192.168.9.1 TCP_TUNNEL/200 115190 CONNECT storage.googleapis.com:443 - HIER_DIRECT/142.250.73.208 -
+	1638363908.054    390 192.168.9.1 TCP_TUNNEL/200 4886 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/142.250.73.202 -
+
+3. service account auth
+   export https_proxy=http://localhost:3128
+
+   pubsub Y
+   auth Y
+   gcs Y
+
+	1638363985.052    837 192.168.9.1 TCP_TUNNEL/200 5610 CONNECT oauth2.googleapis.com:443 - HIER_DIRECT/172.217.15.74 -
+	1638363985.052    771 192.168.9.1 TCP_TUNNEL/200 115190 CONNECT storage.googleapis.com:443 - HIER_DIRECT/142.250.73.208 -
+	1638363985.052    278 192.168.9.1 TCP_TUNNEL/200 4885 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/142.250.73.202 -
+
+4. basic + user auth
+   export https_proxy=http://user1:user1@localhost:3128
+
+   pubsub Y
+   auth Y
+   gcs Y
+	1638364205.519    338 192.168.9.1 TCP_TUNNEL/200 7240 CONNECT pubsub.googleapis.com:443 user1 HIER_DIRECT/142.250.73.202 -
+	1638364205.521    884 192.168.9.1 TCP_TUNNEL/200 7660 CONNECT oauth2.googleapis.com:443 user1 HIER_DIRECT/142.251.33.202 -
+	1638364205.521    805 192.168.9.1 TCP_TUNNEL/200 115189 CONNECT storage.googleapis.com:443 user1 HIER_DIRECT/142.250.73.208 -
+
+5. basic service account auth
+   export https_proxy=http://user1:user1@localhost:3128
+
+   pubsub Y
+   auth Y
+   gcs Y
+
+	1638364340.203    155 192.168.9.1 TCP_TUNNEL/200 4886 CONNECT pubsub.googleapis.com:443 user1 HIER_DIRECT/142.250.73.202 -
+	1638364340.203    680 192.168.9.1 TCP_TUNNEL/200 5810 CONNECT oauth2.googleapis.com:443 user1 HIER_DIRECT/142.251.33.202 -
+	1638364340.203    623 192.168.9.1 TCP_TUNNEL/200 115191 CONNECT storage.googleapis.com:443 user1 HIER_DIRECT/142.250.73.208 -
+*/
 func main() {
+
 	ctx := context.Background()
 
 	gcs, err := storage.NewClient(ctx)
@@ -300,7 +501,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	b := gcs.Buckets(ctx, projectID)
+	b := gcs.Buckets(ctx, "your-project")
 	for {
 		t, err := b.Next()
 		if err == iterator.Done {
@@ -312,7 +513,7 @@ func main() {
 		log.Printf("bucket: %q\n", t.Name)
 	}
 
-	pub, err := pubsub.NewClient(ctx, projectID)
+	pub, err := pubsub.NewClient(ctx, "your-project")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -324,46 +525,75 @@ func main() {
 			break
 		}
 		if err != nil {
-			log.Fatalf("Unable to acquire PubSub Client: %v", err)
+			log.Fatalf("Unable to acquire storage Client: %v", err)
 		}
-		log.Printf("topic: %q\n", t)
+		log.Printf("Topic: %q\n", t)
 	}
 }
-```
 
-the access log output would show both pubsub, gcs calls as well as the authentication exchange over the proxy:
-```
-1506982991.264   2004 172.17.0.1 TCP_MISS/200 3653 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/216.58.199.202 -
-1506982991.264   2004 172.17.0.1 TCP_MISS/200 3654 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/216.58.199.202 -
-1506982991.264   2004 172.17.0.1 TCP_MISS/200 3654 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/216.58.199.202 -
-1506982991.264   2969 172.17.0.1 TCP_MISS/200 51391 CONNECT www.googleapis.com:443 - HIER_DIRECT/172.217.31.74 -
-1506982991.264   3711 172.17.0.1 TCP_MISS/200 6875 CONNECT accounts.google.com:443 - HIER_DIRECT/172.217.24.173 -
-1506982991.265   2005 172.17.0.1 TCP_MISS/200 4675 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/216.58.199.202 -
 ```
 
 # C# [google-cloud-dotnet](https://github.com/GoogleCloudPlatform/google-cloud-dotnet)
 
-C# also uses the environment variables though for some services, enabling it requires some code changes:
-
-
-```
-export https_proxy=http://127.0.0.1:3128
-```
-
-then
 
 ```csharp
-            string CREDENTIAL_FILE_PKCS12 = "/path/to/your/service0-account.p12";
-            string serviceAccountEmail = "yourservice_account@project.gserviceaccount.com";
-            var certificate = new X509Certificate2(CREDENTIAL_FILE_PKCS12, "notasecret",X509KeyStorageFlags.Exportable);
+using System;
 
-            ServiceAccountCredential credential = new ServiceAccountCredential(
-               new ServiceAccountCredential.Initializer(serviceAccountEmail)
-               {
-                   //Scopes = new[] { StorageService.Scope.DevstorageReadOnly, PublisherClient.DefaultScopes },
-                   Scopes = PublisherClient.DefaultScopes.Append(StorageService.Scope.DevstorageReadOnly),
-                   HttpClientFactory = new ProxySupportedHttpClientFactory()
-               }.FromCertificate(certificate));
+using Google.Cloud.Storage.V1;
+using Google.Cloud.PubSub.V1;
+
+using Google.Apis.Auth.OAuth2;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Google.Apis.Http;
+using Google.Apis.Services;
+using Google.Apis.Storage.v1;
+
+using Google.Api.Gax.ResourceNames;
+
+
+namespace main
+{
+    class Program
+    {
+
+        const string projectID = "your-project";
+
+        [STAThread]
+        static void Main(string[] args)
+        {
+            new Program().Run().Wait();
+        }
+
+        private async Task Run()
+        {
+
+// 1. no basic auth, with usercredentials
+// need to set export http_proxy=http://localhost:3128 for Pubsub
+// need to set ProxySupportedHttpClientFactory for GCS and oauth2
+
+//  auth Y
+//  gcs Y
+//  pubsub Y
+
+
+// 1638323879.659    693 192.168.9.1 TCP_TUNNEL/200 45147 CONNECT storage.googleapis.com:443 - HIER_DIRECT/172.253.63.128 -
+// 1638323879.659    884 192.168.9.1 TCP_TUNNEL/200 7349 CONNECT oauth2.googleapis.com:443 - HIER_DIRECT/142.251.45.10 -
+// 1638323879.659    372 192.168.9.1 TCP_TUNNEL/200 7878 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/172.217.13.234 -
+
+
+// 2. no basic auth, with service account credentials
+// export GOOGLE_APPLICATION_CREDENTIALS=/path/to/svc_account.json
+//  auth N
+//  gcs N
+//  pubsub Y
+
+// 3. no basicauth, with ServiceAccountCredential
+            //var stream = new FileStream("/path/to/svc_account.json", FileMode.Open, FileAccess.Read);
+            //ServiceAccountCredential sacredential = ServiceAccountCredential.FromServiceAccountData(stream);
+            GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
+            credential = credential.CreateWithHttpClientFactory(new ProxySupportedHttpClientFactory());
 
             StorageService service = new StorageService(new BaseClientService.Initializer
             {
@@ -371,78 +601,216 @@ then
                 ApplicationName = StorageClientImpl.ApplicationName,
                 HttpClientFactory = new ProxySupportedHttpClientFactory(),
             });
-            var client = new StorageClientImpl(service, null);
+           var client = new StorageClientImpl(service, null);
 
             foreach (var b in client.ListBuckets(projectID))
                 Console.WriteLine(b.Name);
 
-            ChannelCredentials channelCredentials = credential.ToChannelCredentials();
-            Channel channel = new Channel(PublisherClient.DefaultEndpoint.ToString(), channelCredentials);
-            PublisherSettings ps = new PublisherSettings();        
-            PublisherClient publisher = PublisherClient.Create(channel,ps);
-
-            foreach  (Topic t in publisher.ListTopics(new ProjectName(projectID)))
-              Console.WriteLine(t.Name);
+            PublisherServiceApiClient publisher = PublisherServiceApiClient.Create();
+            ProjectName projectName = ProjectName.FromProject(projectID);
+            foreach (Topic t in publisher.ListTopics(projectName))
+                Console.WriteLine(t.Name);
         }
 
     }
 
-public class ProxySupportedHttpClientFactory : HttpClientFactory
-{
-    protected override HttpMessageHandler CreateHandler(CreateHttpClientArgs args)
+    public class ProxySupportedHttpClientFactory : HttpClientFactory
     {
-        //ICredentials credentials = new NetworkCredential("user1", "user1");
-        //var proxy = new WebProxy("http://127.0.0.1:3128", true, null, credentials);
-        var proxy = new WebProxy("http://127.0.0.1:3128", true, null, null);        
-        var webRequestHandler = new HttpClientHandler()
+        protected override HttpMessageHandler CreateHandler(CreateHttpClientArgs args)
         {
-            UseProxy = true,
-            Proxy = proxy,
-            UseCookies = false
-        };
-        return webRequestHandler;
+            var proxy = new WebProxy("http://127.0.0.1:3128", true, null, null);
+            var webRequestHandler = new HttpClientHandler()
+            {
+                UseProxy = true,
+                Proxy = proxy,
+                UseCookies = false
+            };
+            return webRequestHandler;
+        }
     }
-}
+
 }
 ```
 
-Finally, the squid proxy logs will show:
 
-```
-1506991395.032    994 172.17.0.1 TCP_MISS/200 5210 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/172.217.31.42 -
-1506991395.048   2015 172.17.0.1 TCP_MISS/200 10902 CONNECT www.googleapis.com:443 - HIER_DIRECT/172.217.27.234 -
-1506991395.049   2294 172.17.0.1 TCP_MISS/200 4100 CONNECT www.googleapis.com:443 - HIER_DIRECT/172.217.27.234 -
+```csharp
+using System;
+
+using Google.Cloud.Storage.V1;
+using Google.Cloud.PubSub.V1;
+
+using Google.Apis.Auth.OAuth2;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Google.Apis.Http;
+using Google.Apis.Services;
+using Google.Apis.Storage.v1;
+
+using Google.Api.Gax.ResourceNames;
+
+
+namespace main
+{
+    class Program
+    {
+
+        const string projectID = "your-project";
+
+        [STAThread]
+        static void Main(string[] args)
+        {
+            new Program().Run().Wait();
+        }
+
+        private async Task Run()
+        {
+
+// 1. basic auth, with usercredentials
+// need export http_proxy=http://user1:user1@localhost:3128 for pubsub
+// configure ProxySupportedHttpClientFactory with auth for gcs, oauth2
+
+//  auth Y
+//  gcs Y
+//  pubsub Y
+
+// 1638363563.445      0 192.168.9.1 TCP_DENIED/407 3999 CONNECT oauth2.googleapis.com:443 - HIER_NONE/- text/html
+// 1638363563.662      0 192.168.9.1 TCP_DENIED/407 4068 CONNECT storage.googleapis.com:443 - HIER_NONE/- text/html
+// 1638363564.438    776 192.168.9.1 TCP_TUNNEL/200 45147 CONNECT storage.googleapis.com:443 user1 HIER_DIRECT/142.250.73.208 -
+// 1638363564.438    345 192.168.9.1 TCP_TUNNEL/200 7877 CONNECT pubsub.googleapis.com:443 user1 HIER_DIRECT/142.250.73.202 -
+// 1638363564.438    987 192.168.9.1 TCP_TUNNEL/200 7348 CONNECT oauth2.googleapis.com:443 user1 HIER_DIRECT/142.250.73.234 -
+
+// NOTE, see deny first
+
+// 2. no basic auth, with service account credentials
+// export GOOGLE_APPLICATION_CREDENTIALS=/path/to/svc_account.json
+// Invalid Credentials [401]
+// Errors [
+// 	Message[Invalid Credentials] Location[Authorization - header] Reason[authError] Domain[global]
+// ]
+
+// 1638363615.081      0 192.168.9.1 TCP_DENIED/407 4068 CONNECT storage.googleapis.com:443 - HIER_NONE/- text/html
+// 1638363615.287    201 192.168.9.1 TCP_TUNNEL/200 8242 CONNECT storage.googleapis.com:443 user1 HIER_DIRECT/142.250.73.208 -
+
+// 3. no basicauth, with ServiceAccountCredential
+            //var stream = new FileStream("/path/to/svc_account.json", FileMode.Open, FileAccess.Read);
+            //ServiceAccountCredential sacredential = ServiceAccountCredential.FromServiceAccountData(stream);
+            GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
+            credential = credential.CreateWithHttpClientFactory(new ProxySupportedHttpClientFactory());
+
+            StorageService service = new StorageService(new BaseClientService.Initializer
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = StorageClientImpl.ApplicationName,
+                HttpClientFactory = new ProxySupportedHttpClientFactory(),
+            });
+           var client = new StorageClientImpl(service, null);
+
+            foreach (var b in client.ListBuckets(projectID))
+                Console.WriteLine(b.Name);
+
+            PublisherServiceApiClient publisher = PublisherServiceApiClient.Create();
+            ProjectName projectName = ProjectName.FromProject(projectID);
+            foreach (Topic t in publisher.ListTopics(projectName))
+                Console.WriteLine(t.Name);
+        }
+
+    }
+
+    public class ProxySupportedHttpClientFactory : HttpClientFactory
+    {
+        protected override HttpMessageHandler CreateHandler(CreateHttpClientArgs args)
+        {
+            ICredentials credentials = new NetworkCredential("user1", "user1");
+            var proxy = new WebProxy("http://127.0.0.1:3128", true, null, credentials);            
+            //var proxy = new WebProxy("http://127.0.0.1:3128", true, null, null);
+            var webRequestHandler = new HttpClientHandler()
+            {
+                UseProxy = true,
+                Proxy = proxy,
+                UseCookies = false
+            };
+            return webRequestHandler;
+        }
+    }
+
+}
 ```
 
 # NodeJS [google-cloud-node](https://github.com/GoogleCloudPlatform/google-cloud-node)
-
-NodeJS also uses the environment variable directly for _both_ authentication and the RPC call spanning HTTP and GRPC
-
-so simply setting
-```
-export https_proxy=http://localhost:3128
-```
-
-and then running the sample
 
 ```javascript
 var log4js = require("log4js");
 var logger = log4js.getLogger();
 
 const Pubsub = require('@google-cloud/pubsub');
-var gcloud = require('google-cloud');
+const Storage = require('@google-cloud/storage');
 
-var gcs = gcloud.storage();
+
+/*
+
+1. User auth
+   export https_proxy=http://localhost:3128
+
+   auth N
+   gcs Y
+   pubsub Y
+
+   1638364764.530    205 192.168.9.1 TCP_TUNNEL/200 44960 CONNECT www.googleapis.com:443 - HIER_DIRECT/142.250.73.202 -
+   1638364764.939    694 192.168.9.1 TCP_TUNNEL/200 7595 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/142.250.73.202 -
+
+2. user auth
+   export https_proxy=http://localhost:3128
+
+	Auth error:Error: write EPROTO 139715611573120:error:1408F10B:SSL routines:ssl3_get_record:wrong version number:../deps/openssl/openssl/ssl/record/ssl3_record.c:332:
+
+    (which is fine)
+
+3. svc account
+   export https_proxy=http://localhost:3128
+
+   auth Y
+   gcs Y
+   pubsub Y
+
+    1638364926.866     60 192.168.9.1 TCP_TUNNEL/200 5866 CONNECT www.googleapis.com:443 - HIER_DIRECT/142.250.73.202 -
+	1638364926.899     50 192.168.9.1 TCP_TUNNEL/200 6048 CONNECT www.googleapis.com:443 - HIER_DIRECT/142.250.73.202 -
+	1638364927.030    149 192.168.9.1 TCP_TUNNEL/200 44960 CONNECT www.googleapis.com:443 - HIER_DIRECT/142.250.73.202 -
+	1638364927.082    277 192.168.9.1 TCP_TUNNEL/200 7596 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/142.250.73.202 -
+
+4. basic user auth
+   export http_proxy=http://user1:user1@localhost:3128
+
+   auth N
+   gcs Y
+   pubsub Y
+
+	1638365107.917    152 192.168.9.1 TCP_TUNNEL/200 44961 CONNECT www.googleapis.com:443 user1 HIER_DIRECT/172.217.164.138 -
+	1638365107.938    509 192.168.9.1 TCP_TUNNEL/200 7596 CONNECT pubsub.googleapis.com:443 user1 HIER_DIRECT/142.250.73.202 -
+
+5. basic service account
+
+   auth Y
+   gcs Y
+   pubsub Y
+
+	1638365190.001     53 192.168.9.1 TCP_TUNNEL/200 6027 CONNECT www.googleapis.com:443 user1 HIER_DIRECT/172.217.164.138 -
+	1638365190.017     44 192.168.9.1 TCP_TUNNEL/200 5829 CONNECT www.googleapis.com:443 user1 HIER_DIRECT/172.217.164.138 -
+	1638365190.156    142 192.168.9.1 TCP_TUNNEL/200 44960 CONNECT www.googleapis.com:443 user1 HIER_DIRECT/172.217.164.138 -
+	1638365190.192    244 192.168.9.1 TCP_TUNNEL/200 7596 CONNECT pubsub.googleapis.com:443 user1 HIER_DIRECT/142.250.73.202 -
+
+*/
+var gcs = new Storage();
 gcs.getBuckets(function(err, buckets) {
   if (!err) {
   	buckets.forEach(function(value){
-      logger.info(value.id);
+  			logger.info(value.id);
 	});
   }
 });
 
 const pubsub = Pubsub({
-  projectId: 'your_project'
+  projectId: 'your-project'
 });
 pubsub.getTopics((err, topic) => {
 	if (err) {
@@ -453,15 +821,9 @@ pubsub.getTopics((err, topic) => {
     logger.info(entry.name);
 	});
 });
-```
 
-gives
 
-```
-1507120284.378    335 172.17.0.1 TCP_MISS/200 5632 CONNECT accounts.google.com:443 - HIER_DIRECT/216.58.203.77 -
-1507120284.468    283 172.17.0.1 TCP_MISS/200 5632 CONNECT accounts.google.com:443 - HIER_DIRECT/216.58.203.77 -
-1507120285.369    987 172.17.0.1 TCP_MISS/200 11167 CONNECT www.googleapis.com:443 - HIER_DIRECT/172.217.31.74 -
-1507120286.030   2001 172.17.0.1 TCP_MISS/200 5125 CONNECT pubsub.googleapis.com:443 - HIER_DIRECT/172.217.31.42 -
+
 ```
 
 # Squid Proxy Dockerfile

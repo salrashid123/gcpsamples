@@ -1,5 +1,14 @@
 # Using serviceAccountActor IAM role for account impersonation on Google Cloud Platform
 
+
+>>  12/1/21  STOP...i'm just leaving this repo up for archive.  I wrote this article long ago before GCP had formal client library support.
+>> if you want to use GCP libraries for impersonation, see [https://github.com/salrashid123/gcp_impersonated_credentials](https://github.com/salrashid123/gcp_impersonated_credentials)
+
+
+# DEPRECATED!!!
+
+
+
 The [serviceAccountActor](https://cloud.google.com/iam/docs/service-accounts#service_accounts_as_a_resource) IAM role on Google Cloud has some very useful and powerful capabilities.  It is an IAM role that allows you to grant another user or serviceAccount the ability to impersonate a service Account.  In this way, you can have service account A impersonate B and acquire the access_tokens or id_tokens for B.
 
 This article covers how you can acquire id and access tokens for service account B __by__ service account A.  You can also have a end-user assigned the serviceAccountActor role too.
@@ -28,8 +37,8 @@ IAM Permissions page by selecting B as shown below.
 ![images/svc.png](images/svc.png)
 
 In the example screenshot, 
-* serviceAccountA_ID is: svc-2-429@mineral-minutia-820.iam.gserviceaccount.com
-* serviceAccountB_ID is: service-account-b@mineral-minutia-820.iam.gserviceaccount.com
+* serviceAccountA_ID is: svc-2-429@your-project.iam.gserviceaccount.com
+* serviceAccountB_ID is: service-account-b@your-project.iam.gserviceaccount.com
 
 __Note:__ serviceAccountB_ID does not even have any valid certificate keys.  This means there are no valid physical, distributed certificate key files.
 
@@ -79,7 +88,7 @@ Set the scopes to limit the capabilities of a given token.  A list of scopes can
 Now that we have an unsigned JWT claim set, we need to sign it using A's credentials but instruct __.signBlob()__ to sign it for B:
 ```python
 client_id= 'serviceAccountB_ID'
-slist = resource.serviceAccounts().signJwt(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
+slist = resource.serviceAccounts().signJwt(name='projects/your-project/serviceAccounts/' + client_id, 
                                                  body={'payload': claim })
 resp = slist.execute()
 
@@ -115,7 +124,7 @@ curl https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=ya29.ElnUAws0Mf
  "scope": "https://www.googleapis.com/auth/userinfo.email",
  "exp": "1484452560",
  "expires_in": "3543",
- "email": "service-account-b@mineral-minutia-820.iam.gserviceaccount.com",
+ "email": "service-account-b@your-project.iam.gserviceaccount.com",
  "email_verified": "true",
  "access_type": "offline"
 }
@@ -159,7 +168,7 @@ Note the audience is different than for an access_token.
 Now that we have an  JWT claim set, we need to get a jwt  using A's credentials but instruct __.signJwt()__ 
 ```python
 client_id= 'serviceAccountB_ID'
-slist = resource.serviceAccounts().signJwt(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
+slist = resource.serviceAccounts().signJwt(name='projects/your-project/serviceAccounts/' + client_id, 
                                                   body={'payload': id_token_claim })
 resp = slist.execute()     
 signed_jwt = resp['signedJwt']
@@ -218,7 +227,7 @@ now = int(time.time())
 exptime = now + 3600
 id_token_claim =('{"iss":"%s","scope":"%s", "aud":"%s","exp":%s,"iat":%s}') %(client_id,id_scope,audience,exptime,now)    
 
-slist = resource.serviceAccounts().signJwt(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
+slist = resource.serviceAccounts().signJwt(name='projects/your-project/serviceAccounts/' + client_id, 
                                                   body={'payload': id_token_claim })
 resp = slist.execute()
 signed_jwt = resp['signedJwt']
@@ -235,7 +244,7 @@ The JWT issued may look like the following:
   "typ": "JWT"
 }.
 {
-  "iss": "service-account-b@mineral-minutia-820.iam.gserviceaccount.com",
+  "iss": "service-account-b@your-project.iam.gserviceaccount.com",
   "scope": "scope1 scope2",
   "aud": "SystemC",
   "exp": 1484508490,
@@ -257,8 +266,8 @@ If the key used to sign is: 'cc1080d1a4c61e8cb821331a5a2652dee2c901a1', you may 
 Once you have the JWT, you must verify the authenticity of the JWT by verifying against the public certificate.
 The public certs for any Google Service account is visible at URLs similar to:
 For serviceAccount B:
-* JWK Format: [https://www.googleapis.com/service_accounts/v1/jwk/service-account-b@mineral-minutia-820.iam.gserviceaccount.com](https://www.googleapis.com/service_accounts/v1/jwk/service-account-b@mineral-minutia-820.iam.gserviceaccount.com)
-* X509 Format: [https://www.googleapis.com/service_accounts/v1/metadata/x509/service-account-b@mineral-minutia-820.iam.gserviceaccount.com](https://www.googleapis.com/service_accounts/v1/metadata/x509/service-account-b@mineral-minutia-820.iam.gserviceaccount.com)
+* JWK Format: [https://www.googleapis.com/service_accounts/v1/jwk/service-account-b@your-project.iam.gserviceaccount.com](https://www.googleapis.com/service_accounts/v1/jwk/service-account-b@your-project.iam.gserviceaccount.com)
+* X509 Format: [https://www.googleapis.com/service_accounts/v1/metadata/x509/service-account-b@your-project.iam.gserviceaccount.com](https://www.googleapis.com/service_accounts/v1/metadata/x509/service-account-b@your-project.iam.gserviceaccount.com)
 
 The following node sample verfies a self-signed JWT:
 
@@ -267,7 +276,7 @@ var jwt = require('jsonwebtoken');
 var jose = require('node-jose');
 var request = require("request")
 
-var jwk_url = 'https://www.googleapis.com/service_accounts/v1/jwk/service-account-b@mineral-minutia-820.iam.gserviceaccount.com';
+var jwk_url = 'https://www.googleapis.com/service_accounts/v1/jwk/service-account-b@your-project.iam.gserviceaccount.com';
 skeyid = 'cc1080d1a4c61e8cb821331a5a2652dee2c901a1';
 // A GCP service account has multiple keys that are rotated.  Unless the current keyID is specified in the JWT header, you need to iterate 
 // the keys in the keystore to verify the correct one.
@@ -315,20 +324,20 @@ pip install requests google-api-python-client httplib2 oauth2client
 ```
 
 ```bash
-$python gcs_auth.py --client_id=service-account-b@mineral-minutia-820.iam.gserviceaccount.com
+$python gcs_auth.py --client_id=service-account-b@your-project.iam.gserviceaccount.com
 [2017-01-15 11:29:12.072293] access_token: ya29.ElnUA-HwLE2hVH-y0iz5CgGTywcJNP63eTAI216i7e6cC66vXUQd-X87MvVheZ4ZQlwE31Uv_fOJTZ62hiK8pWFt_rN5xc54ZHCzGB4_8pvrZAJGrolLDYEvPw
 
 [2017-01-15 11:29:12.450104] id_token: eyJhbGciOiJSUzI1NiIsImtpZCI6IjAxYTEwMmYyOGNmOGYzNzk3MTVlZDU5ZWU5ODAzY2VkNTViMDMxOTYifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJpYXQiOjE0ODQ1MDg1NTIsImV4cCI6MTQ4NDUxMjE1MiwiYXVkIjoic2VydmljZS1hY2NvdW50LWJAbWluZXJhbC1taW51dGlhLTgyMC5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsInN1YiI6IjEwNDk0MzI5Mzk5Nzk3MTMzMjIyMyIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhenAiOiJzZXJ2aWNlLWFjY291bnQtYkBtaW5lcmFsLW1pbnV0aWEtODIwLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwiZW1haWwiOiJzZXJ2aWNlLWFjY291bnQtYkBtaW5lcmFsLW1pbnV0aWEtODIwLmlhbS5nc2VydmljZWFjY291bnQuY29tIn0.P0juBBi-GGkGnpKR5FaKKXBWxrFsxk25TRqP5fbXklPpMgn5QmAidwt6NG2qK-sE5ebVIj-1EEA7gTub83PK-CCUN4KGDjwhY7Egoodyppdz2TAW0Q5ObKsVUHtwgFNUf_9xSaxorCS202yLcontWjYpRihFFYGrfdvLFOdyeJZ3Iz4NAQdfU_Ouk1bjFt7M-gfvJgIaAQrxNfyhnwsdEDLRd-Dn53V3P73IRAneLuAl2wzQLPYKb2uRCe0u9kjQEjTRQu19tWjLBx59no9nxjXwKEQpFhZm4KqSSIR6xOJYvf3_m0oOwrC8mDGeOLoV8sis1ravtBCp3e9oESl1-g
 
 [2017-01-15 11:29:12.595477]  ID_TOKEN Validation: 
  {
-    "aud": "service-account-b@mineral-minutia-820.iam.gserviceaccount.com", 
+    "aud": "service-account-b@your-project.iam.gserviceaccount.com", 
     "iss": "https://accounts.google.com", 
     "email_verified": true, 
     "exp": 1484512152, 
-    "azp": "service-account-b@mineral-minutia-820.iam.gserviceaccount.com", 
+    "azp": "service-account-b@your-project.iam.gserviceaccount.com", 
     "iat": 1484508552, 
-    "email": "service-account-b@mineral-minutia-820.iam.gserviceaccount.com", 
+    "email": "service-account-b@your-project.iam.gserviceaccount.com", 
     "sub": "104943293997971332223"
 } 
 

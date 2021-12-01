@@ -53,7 +53,7 @@ class gcs_auth(object):
 
 
     # now that we have a JWT, we use the master svc account to get a jwt
-    slist = resource.serviceAccounts().signJwt(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
+    slist = resource.serviceAccounts().signJwt(name='projects/your-project/serviceAccounts/' + client_id, 
                                                   body={'payload': claim })
 
     resp = slist.execute()   
@@ -95,7 +95,7 @@ class gcs_auth(object):
             '"exp":%s,'
             '"iat":%s}') %(client_id,client_id,exptime,now)    
 
-    slist = resource.serviceAccounts().signJwt(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
+    slist = resource.serviceAccounts().signJwt(name='projects/your-project/serviceAccounts/' + client_id, 
                                                   body={'payload': id_token_claim })
     resp = slist.execute()     
     signed_jwt = resp['signedJwt']    
@@ -135,7 +135,7 @@ class gcs_auth(object):
     exptime = now + 3600
     id_token_claim =('{"iss":"%s","scope":"%s", "aud":"%s","exp":%s,"iat":%s}') %(client_id,id_scope,audience,exptime,now)   
 
-    slist = resource.serviceAccounts().signJwt(name='projects/mineral-minutia-820/serviceAccounts/' + client_id, 
+    slist = resource.serviceAccounts().signJwt(name='projects/your-project/serviceAccounts/' + client_id, 
                                                   body={'payload': id_token_claim })
     resp = slist.execute()     
     signed_jwt = resp['signedJwt']

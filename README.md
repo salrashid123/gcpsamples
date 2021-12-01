@@ -18,9 +18,9 @@ You can always specify the target source to acquire credentials by using intent 
 
 There are two types of client libraries you can use to connect to Google APIs:  
 * Google Cloud Client Libraries
-* Gooogle API Client Libraries
+* Gooogle API Client Libraries  << note: this repo now omits this api mechanism (for the most part)
 
-The basic differences is the Cloud Client libraries are idomatic, has [gcloud-based emulators](https://cloud.google.com/sdk/gcloud/reference/beta/emulators/) and much eaiser to use.  
+The basic differences is the Cloud Client libraries are idiomatic, has [gcloud-based emulators](https://cloud.google.com/sdk/gcloud/reference/beta/emulators/) and much easier to use.  
 
 It is recommended to use Cloud Client Libraries whereever possible. Although this article primarily describes the API Client libraries, the python code section describes uses of Cloud Client libraries with Google Cloud Storage.
 
@@ -112,10 +112,10 @@ from google.cloud import storage
 client = storage.Client()
 buckets = client.list_buckets()
 for bkt in buckets:
-  print bkt
+  print(bkt)
 ```
 
-List buckts using gcloud cli explicit credential and project
+List buckets using gcloud cli explicit credential and project
 
 ```python
 from google.cloud import storage
@@ -125,7 +125,7 @@ credentials, project = google.auth.default()
 client = storage.Client(credentials=credentials)
 buckets = client.list_buckets()
 for bkt in buckets:
-  print bkt
+  print(bkt)
 ```
 
 List buckets using an environment variable and then google.auth.default() credentials.
@@ -142,7 +142,7 @@ if credentials.requires_scopes:
 client = storage.Client(credentials=credentials)
 buckets = client.list_buckets()
 for bkt in buckets:
-  print bkt
+  print(bkt)
 ```
 
 List buckets using a service_account oauth2 object directly
@@ -159,7 +159,7 @@ if credentials.requires_scopes:
 client = storage.Client(credentials=credentials)
 buckets = client.list_buckets()
 for bkt in buckets:
-  print bkt
+  print(bkt)
 ```
 
 List buckets using the storage client directly loading the certificate:
@@ -170,7 +170,7 @@ from google.cloud import storage
 client = storage.Client.from_service_account_json("YOUR_JSON_CERT.json")
 buckets = client.list_buckets()
 for bkt in buckets:
-  print bkt
+  print(bkt)
 ```
 
 ##### Iterators
@@ -192,7 +192,7 @@ from google.cloud.logging import DESCENDING
 
 pp = pprint.PrettyPrinter(indent=1)
 
-FILTER = 'resource.type="gae_app" AND logName="projects/mineral-minutia-820/logs/appengine.googleapis.com%2Frequest_log" AND protoPayload.resource="/"'
+FILTER = 'resource.type="gae_app" AND logName="projects/your-project/logs/appengine.googleapis.com%2Frequest_log" AND protoPayload.resource="/"'
 
 client = logging.Client()
 
@@ -234,12 +234,12 @@ q.select_interval(end_time=now,start_time=fifteen_mins_ago)
 q.select_resources(resource_type=resource_type, service=service)
 
 for timeseries in q.iter():
-  print '========== Metric: '
+  print()'========== Metric: ')
   #pprint.pprint(timeseries)
-  print '========== Points: '
+  print()'========== Points: ')
   for p in timeseries.points:
-   print repr(p)
-   print str(p.start_time) + ' --> ' + str(p.end_time) + '  : [' +  str(p.value.get('bucketCounts')) + ']'
+   print(repr(p))
+   print(str(p.start_time) + ' --> ' + str(p.end_time) + '  : [' +  str(p.value.get('bucketCounts')) + ']')
   print('-----------------')
 
 ```
@@ -289,12 +289,12 @@ import os
 #  credentials = credentials.with_scopes(['https://www.googleapis.com/auth/devstorage.read_write'])
 #client = storage.Client(credentials=credentials)
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/srashid/gcp_misc/certs/mineral-minutia-820-83b3ce7dcddb.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/path/to/svc_account.json"
 credentials, project = google.auth.default()    
 client = storage.Client(credentials=credentials)
 buckets = client.list_buckets()
 for bkt in buckets:
-  print bkt
+  print(bkt)
 ```
 
 ##### Logging_Cloud_python
@@ -313,7 +313,7 @@ client = bigquery.Client()
 query_job = client.query("""
         SELECT timestamp
 FROM
- `mineral-minutia-820.gae_request_logs.appengine_googleapis_com_request_log_20161119`
+ `your-project.gae_request_logs.appengine_googleapis_com_request_log_20161119`
 ORDER BY timestamp DESC
 LIMIT
  4;""")
@@ -351,13 +351,13 @@ for Cloud APIs, use:
   <dependency>
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
-      <version>1.35.0</version>
+      <version>zzzz</version>
   </dependency>
 
   <dependency>
     <groupId>com.google.cloud</groupId>
     <artifactId>google-cloud-pubsub</artifactId>
-    <version>1.35.0</version>
+    <version>yyyy</version>
   </dependency>
 ```
 
@@ -405,57 +405,6 @@ System.out.println(signedUrl);
 
 see [proxy/README.md](proxy/README.md)
 
-```  
-export  https_proxy=proxy_server:3128
-```
-
-#### Credential/Channel Providers
-
-```java
-
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.auth.oauth2.ServiceAccountCredentials;
-
-import com.google.api.gax.core.GoogleCredentialsProvider;
-import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.api.gax.grpc.GrpcTransportChannel;
-import com.google.api.gax.rpc.TransportChannelProvider;
-import com.google.api.gax.rpc.FixedTransportChannelProvider;
-
-import com.google.cloud.pubsub.v1.Publisher;
-import com.google.cloud.pubsub.v1.TopicAdminClient;
-import com.google.cloud.pubsub.v1.TopicAdminSettings;
-import com.google.cloud.pubsub.v1.TopicAdminClient.ListTopicSubscriptionsPagedResponse;
-import com.google.cloud.pubsub.v1.TopicAdminClient.ListTopicsPagedResponse;
-import com.google.pubsub.v1.ProjectTopicName;
-import com.google.pubsub.v1.ListTopicsRequest;
-import com.google.pubsub.v1.ProjectName;
-import com.google.pubsub.v1.ProjectTopicName;
-import com.google.pubsub.v1.Topic;
-
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-
-    // or set ADC
-    //export GOOGLE_APPLICATION_CREDENTIALS="/path/to/keyfile.json"
-    String cred_env = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
-	GoogleCredentials creds = GoogleCredentials.getApplicationDefault();	  	  
-    //String cert_file = "keyfile.json";    
-	//GoogleCredentials creds = GoogleCredentials.fromStream(new FileInputStream(cred_env));
-	FixedCredentialsProvider credentialsProvider = FixedCredentialsProvider.create(creds);
-
-	///ManagedChannel channel = ManagedChannelBuilder.forTarget("pubsub.googleapis.com:443").build();
-    //TransportChannelProvider channelProvider = FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel));
-
-	TransportChannelProvider channelProvider = TopicAdminSettings.defaultTransportChannelProvider();
-
-	TopicAdminClient topicClient =
-	  TopicAdminClient.create(
-		  TopicAdminSettings.newBuilder()
-			  .setTransportChannelProvider(channelProvider)
-			  .setCredentialsProvider(credentialsProvider)
-			  .build());
-```
 
 ##### Async Futures
 
@@ -477,7 +426,7 @@ import com.google.cloud.Role;
 			  .setCredentialsProvider(credentialsProvider)
               .build());
 
-      String formattedResource = TopicName.create("mineral-minutia-820", "saltopic2").toString();
+      String formattedResource = TopicName.create("your-project", "saltopic2").toString();
 
       GetIamPolicyRequest request = GetIamPolicyRequest.newBuilder()
         .setResource(formattedResource)
@@ -767,7 +716,7 @@ credentials.authorize(http)
 service = build(serviceName='storage', version= 'v1',http=http)
 resp = service.buckets().list(project='YOUR_PROJECT').execute()
 for i in resp['items']:
-  print i['name']
+  print(i['name'])
 ```
 
 You can also initialize an `AuthorizedHttp` artifact from `google-auth` library with discovery:
@@ -794,41 +743,10 @@ apt-get install curl python2.7 python-pip
 pip install requests google-api-python-client httplib2 oauth2client
 ```
 
-#### Appengine
-
-Under [auth/gae/pyapp/](auth/gae/pyapp/)  Deploys an application to appengine that uses *Application Default Credentials*.  
-
-*AppAssertionCredentials*  is also shown but commented.
-
-Remember to edit app.yaml file with your appID.  
-
-If running on the dev_appserver, you will need to set the local service account id and certificate first:
-```bash
-cd auth/gae/pyapp
-
-virtualenv env
-source env/bin/activate
-pip install -t lib  -r requirements.txt
-deactvate && rm -rf env
-
-# To run with your own gcloud credentials
-dev_appserver.py app.yaml
-
-# For service account credentials
-cat your_svc_account.p12 | openssl pkcs12 -nodes -nocerts -passin pass:notasecret | openssl rsa > key.pem
-dev_appserver.py app.yaml --appidentity-email-address=YOUR_SERVICE_ACCOUNT_ID@developer.gserviceaccount.com --appidentity-private-key-path=key.pem
-
-```
-
-For info on ```--appidentity-email-address``` and ```--appidentity-private-key-path```, see documentation on [gcloud dev_appserver](https://cloud.google.com/sdk/gcloud/reference/preview/app/run).
-
 #### ComputeEngine
 
 Under [auth/compute/pyapp](auth/compute/pyapp)  Runs a simple application on compute engine using *Application Default Credentials*.
 
-*AppAssertionCredentials* is also shown but commented
-
-or
 
 ```
 cd auth/compute/pyapp
@@ -895,18 +813,6 @@ logging.getLogger('apiclient.discovery').setLevel(logging.DEBUG)
 httplib2.debuglevel=3
 ```
 
-##### Appengine Cloud Endpoints Framework
-
-Sample discovery for Appengine Cloud Enpoints.
-
->> Note: this is for use with Endpoints Framework running on GAE python27 and java7 (not OpenAPI)
-
-```python
-service = build(serviceName='myendpoint', discoveryServiceUrl='https://yourappid.appspot.com/_ah/api/discovery/v1/apis/yourendpoint/v1/rest',version= 'v1',http=http)
-resource = service.yourAPI()
-resp = resource.get(parameter='value').execute()
-```
-
 ##### Credential store
 
 See [credential store](https://developers.google.com/api-client-library/python/guide/aaa_oauth#storage) documentation.
@@ -937,7 +843,7 @@ headers = {"Content-Type": "application/x-www-form-urlencoded"}
 conn = httplib.HTTPSConnection("www.googleapis.com")
 conn.request("POST", "/oauth2/v4/token", params, headers)
 res = json.loads(conn.getresponse().read())
-print res
+print(res)
 ```
 
 The new (preferred) way is to use the new ```iamcredentials`` API directly.  See [id_tokens/README.md](id_tokens/README.md)
@@ -973,16 +879,7 @@ If you are running the flow directly, if you used *'scope': 'https://www.googlea
 
 [Java API Client Library](https://developers.google.com/api-client-library/java/).  Most of the samples below uses gradle to build and deploy.
 
-#### Appengine
 
-Under [auth/gae/javaapp](auth/gae/javaapp).  Runs a simple application using both *Application DefaultCredentials* and *AppIdentityService*.  To deploy, edit the *build.gradle* file and enter the username of an administrator on the GAE application.
-
-Sample shows both Cloud Client and Google API library set
-
-```bash
-mvn appengine:run
-mvn appengine:deploy
-```
 #### ComputeEngine
 
 Under [auth/compute/javaapp](auth/compute/javaapp).  Runs a simple application using both *Application DefaultCredentials* and *ComputeCredential*.
@@ -1114,29 +1011,6 @@ import com.google.api.gax.retrying.RetrySettings;
 ###  Google API Go
 [DefaultTokenSource](https://godoc.org/golang.org/x/oauth2/google#DefaultTokenSource)  
 
-#### Appengine
-Under [auth/gae/goapp](auth/gae/goapp).  Runs a simple GAE application using both *Application DefaultCredentials* and *AppEngineTokenSource*.  To deploy:
-
-> Note: for use with Appengine Standard:
-
-```bash
-mkdir extra
-export GOPATH=`pwd`/extra
-
-go get golang.org/x/oauth2
-go get google.golang.org/appengine/...
-go get google.golang.org/cloud/compute/...
-go get google.golang.org/api/oauth2/v2
-go get cloud.google.com/go/compute/metadata
-
-
-run locally:
-  dev_appserver.py src/app.yaml
-
-deploy:
-  gcloud app deploy deploy src/app.yaml
-
-```
 
 #### ComputeEngine
 
@@ -1222,55 +1096,15 @@ client.Transport = &transport.APIKey{
 
 ##### ID Token Signed by Google
 
-The following only works with your local (user) gcloud credentials.
+see
+- [https://github.com/salrashid123/google_id_token](https://github.com/salrashid123/google_id_token)
+- [https://github.com/salrashid123/grpc_google_id_tokens](https://github.com/salrashid123/grpc_google_id_tokens)
 
-Also see
 
 - [id_token/README.md](id_token/README.md)
 
-```golang
-import (
-	"log"
-
-	"golang.org/x/net/context"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-	oauthsvc "google.golang.org/api/oauth2/v2"
-
-	"google.golang.org/grpc/credentials/oauth"
-)
-
-func main() {
-
-	src, err := google.DefaultTokenSource(oauth2.NoContext, oauthsvc.UserinfoEmailScope)
-	if err != nil {
-		log.Fatalf("Unable to acquire token source: %v", err)
-	}
-
-	creds := oauth.TokenSource{src}
-	tok, err := creds.Token()
-	if err != nil {
-		log.Fatalf("Unable to acquire token source: %v", err)
-	}
-	if (tok.Extra("id_token") != nil){
-		log.Printf("id_token: " , tok.Extra("id_token").(string))
-	}
-}
-```
-
 [Validating id_token](https://developers.google.com/identity/protocols/OpenIDConnect?hl=en#validatinganidtoken)
 
-```go
-src, err := google.DefaultTokenSource(oauth2.NoContext, oauthsvc.UserinfoEmailScope)
-if err != nil {
-    log.Fatalf("Unable to acquire token source: %v", err)
-}
-tok, err := src.Token()
-if err != nil {
-    log.Fatalf("Unable to acquire token: %v", err)
-}
-log.Printf("id_token: " , tok.Extra("id_token").(string))
-```
 
 Also see  
 * [Golang Token verificaiton](http://stackoverflow.com/questions/26159658/golang-token-validation-error/26287613#26287613)
@@ -1377,13 +1211,6 @@ func Auth() {
 
 ###  Google API NodeJS
 [google.auth.getApplicationDefault](https://developers.google.com/identity/protocols/application-default-credentials#callingnode)  
-
-#### Appengine
-
-Under [auth/gae/nodeapp](auth/gae/nodeapp).  Runs a simple GAE application using *Application DefaultCredentials*.  To deploy:
-```
-gcloud app deploy app.yaml
-```
 
 #### ComputeEngine
 

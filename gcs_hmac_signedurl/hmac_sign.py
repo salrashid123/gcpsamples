@@ -19,7 +19,7 @@ import requests
 GCS_API_ENDPOINT = 'https://storage.googleapis.com'
 hmac_key = 'GOOGE6ESAVCTDYJSGKXMQK6M'
 hmac_secret = 'aZK6ILu4pHfFD1F8wLlhFllakLq0CqjQM9ez0pXy'
-BUCKET_NAME = 'mineral-minutia-820'
+BUCKET_NAME = 'your-project'
 OBJECT_NAME = 'somefile.txt'
 
 expiration = datetime.datetime.now() +  datetime.timedelta(seconds=60)
@@ -60,17 +60,17 @@ def MakeUrl(verb, path, content_type='', content_md5=''):
 file_path = '/%s/%s' % (BUCKET_NAME, OBJECT_NAME)
 
 
-print "PUT:"
+print("PUT:")
 u =  MakeUrl("PUT",file_path)
 print u
 r = requests.put(u, data='lorem ipsum')
-print "put status_code: " + str(r.status_code)
-print 'data: ' + r.text
-print "---------------------------------"
+print("put status_code: " + str(r.status_code))
+print('data: ' + r.text)
+print("---------------------------------")
 
-print "GET"
+print("GET")
 u =  MakeUrl("GET",file_path)
-print u
+print(u)
 r = requests.get(u)
-print "get status_code: " + str(r.status_code)
-print 'data; ' + r.text
+print("get status_code: " + str(r.status_code))
+print('data; ' + r.text)

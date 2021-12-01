@@ -12,7 +12,7 @@ import (
 
 	"echo"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt"
 	"github.com/lestrrat/go-jwx/jwk"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"

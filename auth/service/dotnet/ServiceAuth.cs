@@ -36,37 +36,15 @@ namespace Oauth2Harness
 
         private async Task Run()
         {
-            /*
-            string CREDENTIAL_FILE_PKCS12 = "c:\\your_pkcs_cert.p12";
-            string serviceAccountEmail = "YOUR_SERVICE_ACCOUNT_EMAIL@developer.gserviceaccount.com";
-            var certificate = new X509Certificate2(CREDENTIAL_FILE_PKCS12, "notasecret", X509KeyStorageFlags.Exportable);
-            ServiceAccountCredential credential = new ServiceAccountCredential(
-               new ServiceAccountCredential.Initializer(serviceAccountEmail)
-               {
-                   Scopes = new[] { Oauth2Service.Scope.UserinfoEmail }
-               }.FromCertificate(certificate));
-            */
+
+            // export GOOGLE_APPLICATION_CREDENTIALS=/path/to/svc_account.json
             
-            // a) for google apis:
-
-            //string CREDENTIAL_FILE_JSON = "C:\\your_json_cert.json";
-            //Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", CREDENTIAL_FILE_JSON);
-            
-            //GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
-            if (credential.IsCreateScopedRequired)
-                credential = credential.CreateScoped(new string[] { Oauth2Service.Scope.UserinfoEmail });
-            var service = new Oauth2Service(new BaseClientService.Initializer()
-            {
-                HttpClientInitializer = credential,
-                ApplicationName = "Oauth2 Sample",
-            });
-            Console.WriteLine(service.Userinfo.Get().Execute().Email);
-
-            // b) For Google Cloud APIs:
-
+            GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
+            //var stream = new FileStream("/path/to/svc_account.json", FileMode.Open, FileAccess.Read);
+            //ServiceAccountCredential credential = ServiceAccountCredential.FromServiceAccountData(stream);
             var client = StorageClient.Create();
-            
-            foreach (var obj in client.ListObjects("your_project", ""))
+            string project_id="your-project"; 
+            foreach (var obj in client.ListObjects(project_id, ""))
             {
                 Console.WriteLine(obj.Name);
             }
